@@ -1,12 +1,12 @@
-const validatePaylod = (body: any, fields: string[]): boolean => {
+const isValidatePaylod = (body: any, fields: string[]): boolean => {
     if (!body) {
         return false
     }
     for (let i = 0; i < fields.length; i++) {
         if (!body[fields[i]]) return false
     }
-    return false
+    return true
 }
 
-const helper = { validatePaylod }
+const helper = { isValidatePaylod }
 export default helper

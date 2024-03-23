@@ -1,8 +1,14 @@
 import { NextFunction, Request, Response } from 'express'
 
-const ErrorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
+const ErrorHandler = (err: Error, req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof Error) {
-        console.log(err.message)
+        if (err.name === 'PrismaClientKnownRequestError') {
+            return res.status(200).send({
+                status: 400,
+                error: 'Invalid Payload',
+                error_description: err.message,
+            })
+        }
         return res.status(200).send({
             status: 500,
             error: 'Internal Server Error',

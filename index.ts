@@ -15,6 +15,10 @@ app.get('/ping', (req: any, res: Response) => {
 app.use('/auth', authRouter)
 app.use('/user', userRouter)
 
+app.get('/', (req: any, res: any) => {
+    return res.status(200).send('small')
+})
+
 app.use(middleware.ErrorHandler)
 
 app.listen(process.env.PORT!, () => console.log(`Running of ${process.env.PORT}`))

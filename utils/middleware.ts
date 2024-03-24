@@ -1,4 +1,49 @@
 import { NextFunction, Request, Response } from 'express'
+import jwt from 'jsonwebtoken'
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
+
+export type ExtendedRequest = Request & {
+    user: any
+}
+
+const AuthMiddleware = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const token = req.headers?.authorization
+
+    if (!token) {
+        return res.status(200).send({
+            status: 400,
+            error: 'Authentication failed',
+            error_description: 'token is required',
+        })
+    }
+
+    const splittedToken = token.split(' ')
+    if (splittedToken[0] !== 'Bearer') {
+        return res.status(200).send({
+            status: 400,
+            error: 'Authentication failed',
+            error_description: 'Invalid token type',
+        })
+    }
+
+    let decryptedToken: any
+    try {
+        decryptedToken = jwt.verify(splittedToken[1], process.env.JWT_SECRET!)
+    } catch (err: any) {
+        return next(err)
+    }
+
+    const userEmail: string = decryptedToken?.email
+    if (!userEmail) {
+        const err = new Error("Error: token doens't contain email")
+        return next(err)
+    }
+    const user = await prisma.user.findFirst({ where: { email: userEmail } })
+    delete (user as any)?.password
+    req.user = user
+    next()
+}
 
 const ErrorHandler = (err: Error, req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof Error) {
@@ -17,6 +62,6 @@ const ErrorHandler = (err: Error, req: Request, res: Response, _next: NextFuncti
     }
 }
 
-const middleware = { ErrorHandler }
+const middleware = { ErrorHandler, AuthMiddleware }
 
 export default middleware

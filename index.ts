@@ -1,24 +1,33 @@
-import express, { Response } from 'express'
+import multer from 'multer'
 import dotenv from 'dotenv'
-import authRouter from './routes/auth.routes'
-import userRouter from './routes/user.routes'
-import middleware from './utils/middleware'
 dotenv.config()
-const app = express()
+import fs from 'fs'
 
-app.use(express.json())
+const staticFilePath = __dirname + '/public'
+try {
+    fs.readdirSync(staticFilePath)
+} catch (err) {
+    try {
+        fs.mkdirSync(staticFilePath)
+    } catch (err) {
+        console.error(err)
+    }
+}
 
-app.get('/ping', (req: any, res: Response) => {
-    return res.status(200).send({ status: 200, message: 'pong' })
+const imageStorage = multer.diskStorage({
+    destination: staticFilePath + '/images',
+    filename: function (req, file, cb) {
+        const uniquePrefix = new Date().getTime()
+        cb(null, `${uniquePrefix}-${file.originalname}`)
+    },
 })
+export const upload = multer({ storage: imageStorage })
 
-app.use('/auth', authRouter)
-app.use('/user', userRouter)
-
-app.get('/', (req: any, res: any) => {
-    return res.status(200).send('small')
-})
-
-app.use(middleware.ErrorHandler)
-
-app.listen(process.env.PORT!, () => console.log(`Running of ${process.env.PORT}`))
+const PORT = process.env.PORT!
+import('./app')
+    .then((app) => {
+        app.default.listen(PORT, () => console.log(`Server running on ${PORT}`))
+    })
+    .catch((err) => {
+        console.error('Error in loading app', err)
+    })

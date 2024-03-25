@@ -22,8 +22,33 @@ model User {
   gender        Int? // 0 = female, 1 = male
   date_of_birth DateTime?
   bio           String?
+  is_verified   Boolean   @default(false)
   // followed_by   User[]    @relation("UserFollows", references: [id])
   // following     User[]    @relation("UserFollows", references: [id])
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
+  otp           Otp?
+  post          Post[]
+}
+
+model Otp {
+  id         Int      @id @default(autoincrement())
+  otp        Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user_id Int  @unique
+  user    User @relation(fields: [user_id], references: [id])
+}
+
+model Post {
+  id          Int     @id @default(autoincrement())
+  image       String
+  description String?
+
+  user_id Int  @unique
+  user    User @relation(fields: [user_id], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }

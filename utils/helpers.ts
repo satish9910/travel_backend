@@ -1,3 +1,5 @@
+import nodemailer from 'nodemailer'
+
 const isValidatePaylod = (body: any, fields: string[]): boolean => {
     if (!body) {
         return false
@@ -27,5 +29,21 @@ const isValidDateFormat = (date: string) => {
     return true
 }
 
-const helper = { isValidatePaylod, isValidDateFormat }
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'kapilrohilla2002@gmail.com',
+        pass: process.env.GMAIL_APP_PASSWORD!,
+    },
+})
+const sendMail = (to: string, subject: string, body: string) => {
+    transporter.sendMail({
+        from: 'kapilrohilla2002@gmail.com',
+        to: to,
+        subject: subject,
+        text: body,
+    })
+}
+
+const helper = { isValidatePaylod, isValidDateFormat, sendMail }
 export default helper

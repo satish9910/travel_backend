@@ -40,6 +40,10 @@ const AuthMiddleware = async (req: ExtendedRequest, res: Response, next: NextFun
         return next(err)
     }
     const user = await prisma.user.findFirst({ where: { email: userEmail } })
+
+    if (!user) {
+        return res.status(200).send({ status: 400, error: 'user not found.', error_description: 'Account had closed.' })
+    }
     delete (user as any)?.password
     req.user = user
     next()

@@ -46,6 +46,7 @@ const Login = async (req: Request, res: Response, next: NextFunction) => {
     })
 }
 
+// TODO Incomplete
 const ForgotPassword = async (req: Request, res: Response) => {
     return res.status(200).send({ status: 200, error: 'incomplete route' })
 }

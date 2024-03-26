@@ -142,7 +142,7 @@ const VerifyOtp = async (req: Request, res: Response, next: NextFunction) => {
         return res.status(200).send({ error: 'Bad Request', error_description: 'OTP is not valid.' })
     }
     if (otpData?.otp === otp) {
-        const otpExpirationTime = otpData.updated_at.setMinutes(5)
+        const otpExpirationTime = new Date(otpData.updated_at).setMinutes(new Date().getMinutes() + 5)
         if (otpExpirationTime < new Date().getTime()) {
             return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'OTP is expired.' })
         }

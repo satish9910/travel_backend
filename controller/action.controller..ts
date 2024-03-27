@@ -77,12 +77,54 @@ export const CommentPost = async (req: ExtendedRequest, res: Response, next: Nex
     } else {
         return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Post not found.' })
     }
-
+}
+export const Follows = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const body = req.body
+    if (!helper.isValidatePaylod(body, ['user_id', 'action'])) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'user_id, action is required.' })
+    }
+    let { user_id, action } = req.body // action => 1: follow, 2: unfollow
+    if (Number.isNaN(Number(user_id)) || Number.isNaN(Number(action))) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'user_id, action should be a number.' })
+    }
+    user_id = Number(user_id)
+    const isAlreadyFollowing = await prisma.follows.findFirst({
+        where: { user_id: user_id, follower_id: req.user.id },
+    })
+    if (action === 1) {
+        try {
+            if (isAlreadyFollowing) {
+                return res
+                    .status(200)
+                    .send({ status: 400, error: 'Bad Request', error_description: 'Already following this user' })
+            }
+            const entry = await prisma.follows.create({ data: { user_id: user_id, follower_id: req.user.id } })
+            return res.status(200).send({ status: 200, message: 'Ok', follow: entry })
+        } catch (err) {
+            return next(err)
+        }
+    } else {
+        try {
+            if (!isAlreadyFollowing) {
+                return res
+                    .status(200)
+                    .send({ status: 400, error: 'Bad Request', error_description: 'Not following this user' })
+            }
+            const follow = await prisma.follows.deleteMany({ where: { user_id: user_id, follower_id: req.user.id } })
+            return res.status(200).send({ status: 200, message: 'Ok', unfollow: follow })
+        } catch (err) {
+            next(err)
+        }
+    }
     return res.sendStatus(500)
 }
 // export const GetComments = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
 //     return res.status(200).send({ status: 500, message: 'not implemented' })
 // }
 
-const actionController = { LikePost, CommentPost }
+const actionController = { LikePost, CommentPost, Follows }
 export default actionController

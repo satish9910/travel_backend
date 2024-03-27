@@ -9,5 +9,8 @@ userRouter
     .get('/', userController.get_user_details)
     //@ts-ignore
     .put('/', upload.single('profile_pic'), userController.update_user)
-
+    //@ts-ignore
+    .get('/followers', userController.Get_follower)
+    //@ts-ignore
+    .get('/following', userController.GET_following)
 export default userRouter

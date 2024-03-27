@@ -42,7 +42,47 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
         return next(err)
     }
 }
+const Get_follower = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const query = req.query
+    const { iscount } = query
+    if (iscount) {
+        const followerCount = await prisma.follows.count({ where: { user_id: user.id } })
+        return res.status(200).send({ status: 200, message: 'Ok', followerCount: followerCount })
+    } else {
+        try {
+            const followers = await prisma.follows.findMany({
+                where: {
+                    user_id: user.id,
+                },
+            })
+            return res.status(200).send({ status: 200, message: 'Ok', followers: followers })
+        } catch (err) {
+            return next(err)
+        }
+    }
+}
 
-const userController = { get_user_details, update_user }
+const GET_following = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const query = req.query
+    const { iscount } = query
+    if (iscount) {
+        try {
+            const followingCount = await prisma.follows.count({ where: { follower_id: user.id } })
+            return res.status(200).send({ status: 200, message: 'Ok', followingCount: followingCount })
+        } catch (err) {
+            return next(err)
+        }
+    } else {
+        try {
+            const following = await prisma.follows.findMany({ where: { follower_id: user.id } })
+            return res.status(200).send({ status: 200, message: 'Ok', following: following })
+        } catch (err) {
+            return next(err)
+        }
+    }
+}
+const userController = { get_user_details, update_user, Get_follower, GET_following }
 
 export default userController

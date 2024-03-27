@@ -6,6 +6,7 @@ import postRouter from './routes/post.routes'
 import statusMonitor from 'express-status-monitor'
 import fs from 'fs'
 import path from 'path'
+import actionRouter from './routes/action.routes'
 const app = express()
 
 app.use(express.static('public'))
@@ -34,6 +35,8 @@ app.use('/auth', authRouter)
 app.use('/user', middleware.AuthMiddleware, userRouter)
 // @ts-ignore
 app.use('/post', middleware.AuthMiddleware, postRouter)
+// @ts-ignore
+app.use('/action', middleware.AuthMiddleware, actionRouter)
 
 app.use(middleware.ErrorHandler)
 app.all('*', (_req, res) => {

@@ -14,9 +14,5 @@ postRouter
     .post('/', upload.single('image'), postController.CreatePost)
     //@ts-ignore
     .delete('/:id', postController.DeletePost)
-    //@ts-ignore
-    .post('/like', middleware.AccountVerificationHandler, postController.LikePost)
-    //@ts-ignore
-    .post('/comment', middleware.AccountVerificationHandler, postController.CommentPost)
 
 export default postRouter

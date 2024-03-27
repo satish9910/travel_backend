@@ -70,7 +70,6 @@ export const CommentPost = async (req: ExtendedRequest, res: Response, next: Nex
                     user_id: req.user.id,
                 },
             })
-            console.log(commentEntry)
             return res.status(200).send({ status: 201, message: 'Created', comment: commentEntry })
         } catch (err) {
             return next(err)

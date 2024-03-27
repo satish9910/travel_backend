@@ -23,13 +23,13 @@ model User {
   date_of_birth DateTime?
   bio           String?
   is_verified   Boolean   @default(false)
-  // followed_by   User[]    @relation("UserFollows", references: [id])
-  // following     User[]    @relation("UserFollows", references: [id])
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
   otp           Otp?
-  post          Post[]
-  Comment       Comment[]
+
+  post       Post[]
+  Comment    Comment[]
+  Follows_by Follows_by[]
 }
 
 model Otp {
@@ -76,4 +76,14 @@ model Likes {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Follows_by {
+  id          Int @id @default(autoincrement())
+  user_id     Int
+  follower_id Int
+
+  user       User     @relation(fields: [user_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }

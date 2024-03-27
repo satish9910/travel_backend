@@ -66,6 +66,14 @@ const ErrorHandler = (err: Error, req: Request, res: Response, _next: NextFuncti
     }
 }
 
-const middleware = { ErrorHandler, AuthMiddleware }
+const AccountVerificationHandler = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    if (!user.is_verified) {
+        return res.status(200).send({ status: 403, message: 'Forbidden', error: 'Account unverified.' })
+    }
+    next()
+}
+
+const middleware = { ErrorHandler, AuthMiddleware, AccountVerificationHandler }
 
 export default middleware

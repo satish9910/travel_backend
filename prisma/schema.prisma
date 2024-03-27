@@ -52,6 +52,7 @@ model Post {
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  Likes      Likes[]
 }
 
 model Comment {
@@ -62,4 +63,15 @@ model Comment {
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+}
+
+model Likes {
+  id      Int @id @default(autoincrement())
+  post_id Int
+  user_id Int
+
+  Post Post @relation(fields: [post_id], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

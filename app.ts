@@ -14,7 +14,6 @@ app.use(statusMonitor())
 app.get('/ping', (_req, res) => {
     return res.status(200).send({ status: 200, message: 'pong' })
 })
-// app.get('/status', statusMonitor().)
 
 app.get('/public/:filename', (req: Request, res: Response) => {
     const filename = req.params.filename

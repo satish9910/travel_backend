@@ -4,9 +4,21 @@ import { PrismaClient } from '@prisma/client'
 import helper from '../utils/helpers'
 const prisma = new PrismaClient()
 
-const get_all_users = async (_req: Request, res: Response, next: NextFunction) => {
+const get_all_users = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const query = req.query
+    const { page = 1, limit = 10 } = query
+    if (isNaN(Number(page)) || isNaN(Number(limit))) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'Invalid Query Parameters' })
+    }
+    const skip = (Number(page) - 1) * Number(limit)
     try {
-        const users = await prisma.user.findMany()
+        const users = await prisma.user.findMany({
+            skip: skip,
+            take: Number(limit),
+            where: { NOT: { id: req.user.id } },
+        })
         return res.status(200).send({ status: 200, message: 'Ok', users: users })
     } catch (err) {
         return next(err)
@@ -14,13 +26,30 @@ const get_all_users = async (_req: Request, res: Response, next: NextFunction) =
 }
 
 const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-    try{
-        const following = await prisma.follows.findMany({ where: { follower_id: req.user.id } })
-        const followingIds = following.map((follow) => follow.user_id)
-        const posts = await prisma.post.findMany({ where: { user_id: { in: followingIds } } })
-        const sortedPosts = posts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
-        return res.status(200).send({ status: 200, message: 'Ok', feed: sortedPosts })
-    }catch(err){
+    const query = req.query
+    const { page = 1, limit = 10 } = query
+    if (Number.isNaN(page) || Number.isNaN(limit))
+        return res.status(200).send({
+            status: 400,
+            error: 'Invalid query parameters',
+            error_description: 'skip, limit should be a number',
+        })
+
+    const skip = (Number(page) - 1) * Number(limit)
+    console.log(skip, limit)
+    try {
+        const userIdsObjArr = await prisma.follows.findMany({
+            where: { follower_id: req.user.id },
+            select: { user_id: true },
+            skip: skip,
+            take: Number(limit),
+        })
+        const userIds = userIdsObjArr.map((user_id) => user_id.user_id)
+        const fetchPost = await prisma.post.findMany({
+            where: { user_id: { in: userIds } },
+        })
+        return res.status(200).send({ status: 200, message: 'Ok', posts: fetchPost })
+    } catch (err) {
         return next(err)
     }
 }

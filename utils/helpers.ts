@@ -32,13 +32,13 @@ const isValidDateFormat = (date: string) => {
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'kapilrohilla2002@gmail.com',
+        user: process.env.GMAIL_APP_EMAIL!,
         pass: process.env.GMAIL_APP_PASSWORD!,
     },
 })
 const sendMail = (to: string, subject: string, body: string) => {
     transporter.sendMail({
-        from: 'kapilrohilla2002@gmail.com',
+        from: process.env.GMAIL_APP_EMAIL!,
         to: to,
         subject: subject,
         text: body,

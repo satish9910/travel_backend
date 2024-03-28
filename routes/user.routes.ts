@@ -6,6 +6,10 @@ const userRouter = Router()
 
 userRouter
     //@ts-ignore
+    .get('/all', userController.get_all_users)
+    //@ts-ignore
+    .get('/feed', userController.get_user_feed)
+    //@ts-ignore
     .get('/', userController.get_user_details)
     //@ts-ignore
     .put('/', upload.single('profile_pic'), userController.update_user)

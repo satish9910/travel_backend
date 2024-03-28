@@ -48,7 +48,7 @@ model Post {
   description String?
   likes       Int       @default(0)
   comment     Comment[]
-  user_id     Int       
+  user_id     Int
   user        User      @relation(fields: [user_id], references: [id])
 
   created_at DateTime @default(now())

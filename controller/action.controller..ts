@@ -86,6 +86,13 @@ export const Follows = async (req: ExtendedRequest, res: Response, next: NextFun
             .send({ status: 400, error: 'Invalid payload', error_description: 'user_id, action is required.' })
     }
     let { user_id, action } = req.body // action => 1: follow, 2: unfollow
+
+    if (user_id === req.user.id) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: "You can't follow yourself." })
+    }
+
     if (Number.isNaN(Number(user_id)) || Number.isNaN(Number(action))) {
         return res
             .status(200)

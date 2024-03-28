@@ -26,6 +26,7 @@ model User {
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
   otp           Otp?
+  trips         Trip[]
 
   post       Post[]
   Comment    Comment[]
@@ -87,3 +88,35 @@ model Follows {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }
+
+model Service {
+  id          Int @id @default(autoincrement())
+  name        String
+  description String
+  host_id    Int
+  rating      Float
+  price       Float
+  duration    Int
+  trip       Trip[]
+
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
+
+model Trip {
+  id          Int @id @default(autoincrement())
+  user_id     Int
+  destination       String
+  number_of_people Int
+  pincode    Int
+  start_date DateTime
+  end_date   DateTime
+  service_id Int
+
+  service    Service @relation(fields: [service_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+

@@ -4,6 +4,27 @@ import { PrismaClient } from '@prisma/client'
 import helper from '../utils/helpers'
 const prisma = new PrismaClient()
 
+const get_all_users = async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+        const users = await prisma.user.findMany()
+        return res.status(200).send({ status: 200, message: 'Ok', users: users })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try{
+        const following = await prisma.follows.findMany({ where: { follower_id: req.user.id } })
+        const followingIds = following.map((follow) => follow.user_id)
+        const posts = await prisma.post.findMany({ where: { user_id: { in: followingIds } } })
+        const sortedPosts = posts.sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
+        return res.status(200).send({ status: 200, message: 'Ok', feed: sortedPosts })
+    }catch(err){
+        return next(err)
+    }
+}
+
 const get_user_details = (req: ExtendedRequest, res: Response, _next: NextFunction) => {
     return res.status(200).send({ status: 200, message: 'Ok', user: req.user })
 }
@@ -83,6 +104,6 @@ const GET_following = async (req: ExtendedRequest, res: Response, next: NextFunc
         }
     }
 }
-const userController = { get_user_details, update_user, Get_follower, GET_following }
+const userController = { get_all_users, get_user_feed, get_user_details, update_user, Get_follower, GET_following }
 
 export default userController

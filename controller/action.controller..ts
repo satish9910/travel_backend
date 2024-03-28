@@ -117,14 +117,11 @@ export const Follows = async (req: ExtendedRequest, res: Response, next: NextFun
             const follow = await prisma.follows.deleteMany({ where: { user_id: user_id, follower_id: req.user.id } })
             return res.status(200).send({ status: 200, message: 'Ok', unfollow: follow })
         } catch (err) {
-            next(err)
+            return next(err)
         }
     }
     return res.sendStatus(500)
 }
-// export const GetComments = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-//     return res.status(200).send({ status: 500, message: 'not implemented' })
-// }
 
 const actionController = { LikePost, CommentPost, Follows }
 export default actionController

@@ -27,6 +27,7 @@ model User {
   updated_at    DateTime  @updatedAt
   otp           Otp?
   trips         Trip[]
+  expense      Expense[]
 
   post       Post[]
   Comment    Comment[]
@@ -94,8 +95,9 @@ model Service {
   name        String
   description String
   host_id     Int
-  rating      Float
-  price       Float
+  pincode     Int
+  rating      Float @default(0)
+  price       Int
   duration    Int
   trip        Trip[]
 
@@ -109,12 +111,27 @@ model Trip {
   destination      String
   number_of_people Int
   pincode          Int
-  start_date       DateTime
-  end_date         DateTime
-  service_id       Int
+  start_date       String
+  end_date         String
+  service_id       Int  
+  expense         Expense[]
 
   service    Service  @relation(fields: [service_id], references: [id])
   user       User     @relation(fields: [user_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Expense {
+  id          Int    @id @default(autoincrement())
+  user_id     Int
+  amount      Int
+  category    String
+  note        String?
+  trip_id     Int
+
+  user       User     @relation(fields: [user_id], references: [id])
+  trip       Trip     @relation(fields: [trip_id], references: [id])
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }

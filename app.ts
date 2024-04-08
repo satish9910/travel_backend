@@ -9,6 +9,7 @@ import path from 'path'
 import actionRouter from './routes/action.routes'
 import tripRouter from './routes/trip.routes'
 import ServiceRouter from './routes/service.routes'
+import ExpenseRouter from './routes/expense.routes'
 const app = express()
 
 app.use(express.static('public'))
@@ -42,7 +43,9 @@ app.use('/action', middleware.AuthMiddleware, actionRouter)
 // @ts-ignore
 app.use('/trip', middleware.AuthMiddleware, tripRouter)
 // @ts-ignore
-app.use('/service', middleware.AuthMiddleware, ServiceRouter)
+app.use('/service', ServiceRouter)
+// @ts-ignore
+app.use('/expense', middleware.AuthMiddleware, ExpenseRouter)
 
 app.use(middleware.ErrorHandler)
 app.all('*', (_req, res) => {

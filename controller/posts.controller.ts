@@ -18,12 +18,20 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
             image: req.file?.filename,
             description: body.description,
             user_id: user.id,
+            media_type: body.media_type
         },
     })
     return res.status(200).send({ status: 201, message: 'Created', post: post })
     // return res
     //     .status(200)
     //     .send({ status: 500, error: 'Incomplete route', error_description: 'post creation in db is pending' })
+}
+
+export const GetOnlyVideos = async (req: ExtendedRequest, res: Response, _next: NextFunction) => {
+    const user = req.user
+    const videos = await prisma.post.findMany({ where: { user_id: user.id, media_type: 'VIDEO' } })
+
+    return res.status(200).send({ status: 200, message: 'Ok', videos })
 }
 
 export const GetPosts = async (req: ExtendedRequest, res: Response, _next: NextFunction) => {
@@ -83,5 +91,5 @@ export const DeletePost = async (req: ExtendedRequest, res: Response, next: Next
         return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Post not found.' })
     }
 }
-const postController = { CreatePost, GetPosts, GetSpecificPost, DeletePost }
+const postController = { CreatePost, GetPosts, GetSpecificPost, DeletePost, GetOnlyVideos }
 export default postController

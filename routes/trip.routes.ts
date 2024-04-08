@@ -8,6 +8,8 @@ TripRouter
     .post('/', tripController.CreateTrip)
     //@ts-ignore
     .get('/', tripController.GetTrips)
+    //@ts-ignore
+    .get('/:id', tripController.GetSpecificTrip)
 
     
 export default TripRouter

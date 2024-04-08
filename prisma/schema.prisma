@@ -22,6 +22,8 @@ model User {
   gender        Int? // 0 = female, 1 = male
   date_of_birth DateTime?
   bio           String?
+  latitude      Float?
+  longitude     Float?
   is_verified   Boolean   @default(false)
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
@@ -46,8 +48,9 @@ model Otp {
 
 model Post {
   id          Int       @id @default(autoincrement())
-  image       String
+  image   String
   description String?
+  media_type   MediaType @default(IMAGE)
   likes       Int       @default(0)
   comment     Comment[]
   user_id     Int
@@ -56,6 +59,11 @@ model Post {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   Likes      Likes[]
+}
+
+enum MediaType{
+  IMAGE
+  VIDEO
 }
 
 model Comment {

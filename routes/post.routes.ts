@@ -9,6 +9,8 @@ postRouter
     //@ts-ignore
     .get('/', postController.GetPosts)
     //@ts-ignore
+    .get('/videos', postController.GetOnlyVideos)
+    //@ts-ignore
     .get('/:id', postController.GetSpecificPost)
     //@ts-ignore
     .post('/', upload.single('image'), postController.CreatePost)

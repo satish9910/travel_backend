@@ -10,11 +10,13 @@ import actionRouter from './routes/action.routes'
 import tripRouter from './routes/trip.routes'
 import ServiceRouter from './routes/service.routes'
 import ExpenseRouter from './routes/expense.routes'
+import cors from "cors";
 const app = express()
 
 app.use(express.static('public'))
 app.use(express.json())
 app.use(statusMonitor())
+app.use(cors());
 app.get('/ping', (_req, res) => {
     return res.status(200).send({ status: 200, message: 'pong' })
 })

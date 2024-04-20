@@ -16,6 +16,7 @@ datasource db {
 model User {
   id            Int       @id @default(autoincrement())
   username      String    @unique
+  phone         String    @unique
   password      String
   email         String    @unique
   image         String?
@@ -29,7 +30,7 @@ model User {
   updated_at    DateTime  @updatedAt
   otp           Otp?
   trips         Trip[]
-  expense      Expense[]
+  expense       Expense[]
 
   post       Post[]
   Comment    Comment[]
@@ -48,9 +49,9 @@ model Otp {
 
 model Post {
   id          Int       @id @default(autoincrement())
-  image   String
+  image       String
   description String?
-  media_type   MediaType @default(IMAGE)
+  media_type  MediaType @default(IMAGE)
   likes       Int       @default(0)
   comment     Comment[]
   user_id     Int
@@ -61,7 +62,7 @@ model Post {
   Likes      Likes[]
 }
 
-enum MediaType{
+enum MediaType {
   IMAGE
   VIDEO
 }
@@ -104,7 +105,7 @@ model Service {
   description String
   host_id     Int
   pincode     Int
-  rating      Float @default(0)
+  rating      Float  @default(0)
   price       Int
   duration    Int
   trip        Trip[]
@@ -114,15 +115,15 @@ model Service {
 }
 
 model Trip {
-  id               Int      @id @default(autoincrement())
+  id               Int       @id @default(autoincrement())
   user_id          Int
   destination      String
   number_of_people Int
   pincode          Int
   start_date       String
   end_date         String
-  service_id       Int  
-  expense         Expense[]
+  service_id       Int
+  expense          Expense[]
 
   service    Service  @relation(fields: [service_id], references: [id])
   user       User     @relation(fields: [user_id], references: [id])
@@ -131,12 +132,12 @@ model Trip {
 }
 
 model Expense {
-  id          Int    @id @default(autoincrement())
-  user_id     Int
-  amount      Int
-  category    String
-  note        String?
-  trip_id     Int
+  id       Int     @id @default(autoincrement())
+  user_id  Int
+  amount   Int
+  category String
+  note     String?
+  trip_id  Int
 
   user       User     @relation(fields: [user_id], references: [id])
   trip       Trip     @relation(fields: [trip_id], references: [id])

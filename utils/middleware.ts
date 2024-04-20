@@ -58,6 +58,7 @@ const ErrorHandler = (err: Error, req: Request, res: Response, _next: NextFuncti
                 error_description: err.message,
             })
         }
+        console.log(err);
         return res.status(200).send({
             status: 500,
             error: 'Internal Server Error',

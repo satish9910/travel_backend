@@ -100,14 +100,14 @@ const SendOtp = async (req: Request, res: Response, _next: NextFunction) => {
     const { phone } = req.body
     // const otp = Math.floor(10000 + Math.random() * 90000)
     const otp = 1234;
-    const user = await prisma.user.findFirst({ where: { phone } })
+    const user = await prisma.user.findFirst({where: { phone } })
     if (!user) return res.status(200).send({ status: 404, error: 'Not found', error_description: 'user not found' })
     const previousSendOtp = await prisma.otp.findUnique({ where: { user_id: user.id } })
     const userid = user.id
     if (!previousSendOtp) {
         try {
             const otpData = await prisma.otp.create({ data: { user_id: userid, otp: otp } })
-            helper.sendMail(phone , 'TravelApp Account Verification', `Your OTP is ${otp}`)
+            // helper.sendMail(phone , 'TravelApp Acco-unt Verification', `Your OTP is ${otp}`)
         } catch (err) {
             return _next(err)
         }

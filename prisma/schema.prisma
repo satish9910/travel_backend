@@ -18,7 +18,6 @@ model User {
   username      String    @unique
   phone         String    @unique
   password      String
-  email         String    @unique
   image         String?
   gender        Int? // 0 = female, 1 = male
   date_of_birth DateTime?

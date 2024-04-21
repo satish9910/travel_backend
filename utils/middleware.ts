@@ -34,12 +34,12 @@ const AuthMiddleware = async (req: ExtendedRequest, res: Response, next: NextFun
         return next(err)
     }
 
-    const userEmail: string = decryptedToken?.email
-    if (!userEmail) {
+    const phone: string = decryptedToken?.phone
+    if (!phone) {
         const err = new Error("Error: token doens't contain email")
         return next(err)
     }
-    const user = await prisma.user.findFirst({ where: { email: userEmail } })
+    const user = await prisma.user.findFirst({ where: { phone: phone} })
 
     if (!user) {
         return res.status(200).send({ status: 400, error: 'user not found.', error_description: 'Account had closed.' })

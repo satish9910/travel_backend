@@ -38,7 +38,7 @@ const Login = async (req: Request, res: Response, next: NextFunction) => {
             error_description: 'username or password is not valid',
         })
     }
-    const token = jwt.sign({ email: userDetails.email }, process.env.JWT_SECRET!, {
+    const token = jwt.sign({ email: userDetails.username}, process.env.JWT_SECRET!, {
         expiresIn: '7d',
     })
 
@@ -56,17 +56,17 @@ const ForgotPassword = async (req: Request, res: Response) => {
 
 const Signup = async (req: Request, res: Response, next: NextFunction) => {
     const body = req.body
-    if (!helper.isValidatePaylod(body, ['phone','username', 'email', 'password'])) {
+    if (!helper.isValidatePaylod(body, ['phone','username', 'password'])) {
         return res.status(200).send({
             status: 400,
             error: 'Invalid Payload',
-            error_description: 'username, email, password are requried.',
+            error_description: 'username, phone, password are requried.',
         })
     }
-    const { phone ,email, password, username } = req.body
+    const { phone, password, username } = req.body
     let isAlreadyExists: any = false
     try {
-        isAlreadyExists = await prisma.user.findFirst({ where: { OR: [{ email: email }, { username: username }] } })
+        isAlreadyExists = await prisma.user.findFirst({ where: { OR: [{ phone }, { username: username }] } })
     } catch (err) {
         return next(err)
     }
@@ -78,17 +78,19 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
     crypto.pbkdf2(password, SALT_ROUND, ITERATION, KEYLENGTH, DIGEST_ALGO, (err, hash_password: Buffer | string) => {
         hash_password = hash_password.toString('hex')
         if (err) return next(err)
-        else
+        else{
             prisma.user
-                .create({ data: { phone,email, password: hash_password, username } })
+                .create({ data: { phone,password: hash_password, username } })
                 .then((r) => {
                     delete (r as any).password
                     return res.status(200).send({ status: 201, message: 'Created', user: r })
                 })
                 .catch((err) => {
+                    // console.log(err);-
                     return next(err)
                 })
-    })
+    }})
+
 }
 
 const SendOtp = async (req: Request, res: Response, _next: NextFunction) => {
@@ -155,7 +157,7 @@ const VerifyOtp = async (req: Request, res: Response, next: NextFunction) => {
         }
         try {
             const updatedUser = await prisma.user.update({ where: { id: user.id }, data: { is_verified: true } })
-            const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET!, {
+            const token = jwt.sign({ email: user.phone}, process.env.JWT_SECRET!, {
                 expiresIn: '7d',
             })
             return res.status(200).send({ status: 200, message: 'Ok', user: updatedUser , token})

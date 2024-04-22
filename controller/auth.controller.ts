@@ -38,7 +38,7 @@ const Login = async (req: Request, res: Response, next: NextFunction) => {
             error_description: 'username or password is not valid',
         })
     }
-    const token = jwt.sign({ email: userDetails.username}, process.env.JWT_SECRET!, {
+    const token = jwt.sign({ username: userDetails.username}, process.env.JWT_SECRET!, {
         expiresIn: '7d',
     })
 
@@ -157,7 +157,7 @@ const VerifyOtp = async (req: Request, res: Response, next: NextFunction) => {
         }
         try {
             const updatedUser = await prisma.user.update({ where: { id: user.id }, data: { is_verified: true } })
-            const token = jwt.sign({ email: user.phone}, process.env.JWT_SECRET!, {
+            const token = jwt.sign({ username: user.username}, process.env.JWT_SECRET!, {
                 expiresIn: '7d',
             })
             return res.status(200).send({ status: 200, message: 'Ok', user: updatedUser , token})

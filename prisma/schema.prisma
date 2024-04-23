@@ -14,22 +14,24 @@ datasource db {
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
-  username      String    @unique
-  phone         String    @unique
-  password      String
-  image         String?
-  gender        Int? // 0 = female, 1 = male
-  date_of_birth DateTime?
-  bio           String?
-  latitude      Float?
-  longitude     Float?
-  is_verified   Boolean   @default(false)
-  created_at    DateTime  @default(now())
-  updated_at    DateTime  @updatedAt
-  otp           Otp?
-  trips         Trip[]
-  expense       Expense[]
+  id              Int       @id @default(autoincrement())
+  username        String    @unique
+  phone           String    @unique
+  password        String
+  image           String?
+  gender          Int? // 0 = female, 1 = male
+  date_of_birth   DateTime?
+  bio             String?
+  emergency_name  String?
+  emergency_phone String?
+  latitude        Float?
+  longitude       Float?
+  is_verified     Boolean   @default(false)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  otp             Otp?
+  trips           Trip[]
+  expense         Expense[]
 
   post       Post[]
   Comment    Comment[]

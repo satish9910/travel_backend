@@ -27,7 +27,7 @@ const Login = async (req: Request, res: Response, next: NextFunction) => {
         DIGEST_ALGO
     )
     hash_password = hash_password.toString('hex')
-    console.log(hash_password);
+    // console.log(hash_password);
     const userDetails = await prisma.user.findUnique({
         where: { username: body.username, password: hash_password },
     })
@@ -38,7 +38,7 @@ const Login = async (req: Request, res: Response, next: NextFunction) => {
             error_description: 'username or password is not valid',
         })
     }
-    const token = jwt.sign({ username: userDetails.username}, process.env.JWT_SECRET!, {
+    const token = jwt.sign({ phone: userDetails.phone }, process.env.JWT_SECRET!, {
         expiresIn: '7d',
     })
 
@@ -56,7 +56,7 @@ const ForgotPassword = async (req: Request, res: Response) => {
 
 const Signup = async (req: Request, res: Response, next: NextFunction) => {
     const body = req.body
-    if (!helper.isValidatePaylod(body, ['phone','username', 'password'])) {
+    if (!helper.isValidatePaylod(body, ['phone', 'username', 'password'])) {
         return res.status(200).send({
             status: 400,
             error: 'Invalid Payload',
@@ -78,9 +78,9 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
     crypto.pbkdf2(password, SALT_ROUND, ITERATION, KEYLENGTH, DIGEST_ALGO, (err, hash_password: Buffer | string) => {
         hash_password = hash_password.toString('hex')
         if (err) return next(err)
-        else{
+        else {
             prisma.user
-                .create({ data: { phone,password: hash_password, username } })
+                .create({ data: { phone, password: hash_password, username } })
                 .then((r) => {
                     delete (r as any).password
                     return res.status(200).send({ status: 201, message: 'Created', user: r })
@@ -89,7 +89,8 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
                     // console.log(err);-
                     return next(err)
                 })
-    }})
+        }
+    })
 
 }
 
@@ -100,7 +101,7 @@ const SendOtp = async (req: Request, res: Response, _next: NextFunction) => {
     const { phone } = req.body
     // const otp = Math.floor(10000 + Math.random() * 90000)
     const otp = 1234;
-    const user = await prisma.user.findFirst({where: { phone } })
+    const user = await prisma.user.findFirst({ where: { phone } })
     if (!user) return res.status(200).send({ status: 404, error: 'Not found', error_description: 'user not found' })
     const previousSendOtp = await prisma.otp.findUnique({ where: { user_id: user.id } })
     const userid = user.id
@@ -138,9 +139,9 @@ const VerifyOtp = async (req: Request, res: Response, next: NextFunction) => {
             .status(200)
             .send({ status: 400, error: 'Invalid payload', error_description: 'phone, otp are required.' })
     }
-    const user = await prisma.user.findFirst({ where: { phone} })
-    if(user?.is_verified){
-        return res.status(200).send({status: 400, error: "Bad Request", error_description: "User already verified"});
+    const user = await prisma.user.findFirst({ where: { phone } })
+    if (user?.is_verified) {
+        return res.status(200).send({ status: 400, error: "Bad Request", error_description: "User already verified" });
     }
     if (!user)
         return res
@@ -157,10 +158,10 @@ const VerifyOtp = async (req: Request, res: Response, next: NextFunction) => {
         }
         try {
             const updatedUser = await prisma.user.update({ where: { id: user.id }, data: { is_verified: true } })
-            const token = jwt.sign({ username: user.username}, process.env.JWT_SECRET!, {
+            const token = jwt.sign({ phone: user.phone }, process.env.JWT_SECRET!, {
                 expiresIn: '7d',
             })
-            return res.status(200).send({ status: 200, message: 'Ok', user: updatedUser , token})
+            return res.status(200).send({ status: 200, message: 'Ok', user: updatedUser, token })
         } catch (err) {
             return next(err)
         }

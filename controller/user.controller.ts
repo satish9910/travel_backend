@@ -47,6 +47,14 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
         const userIds = userIdsObjArr.map((user_id) => user_id.user_id)
         const fetchPost = await prisma.post.findMany({
             where: { user_id: { in: userIds } },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        image: true
+                    }
+                }
+            }
         })
         return res.status(200).send({ status: 200, message: 'Ok', posts: fetchPost })
     } catch (err) {
@@ -60,7 +68,7 @@ const get_user_details = (req: ExtendedRequest, res: Response, _next: NextFuncti
 
 const update_user = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
-    let { username, gender, date_of_birth, bio } = req.body
+    let { username, gender, date_of_birth, bio, emergency_name, emergency_phone } = req.body
     if (gender) {
         gender = Number(gender)
         if (Number.isNaN(gender)) {
@@ -84,7 +92,7 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
     try {
         const updatedUser = await prisma.user.update({
             where: { id: user.id },
-            data: { username, gender, date_of_birth, bio, image: imagePath },
+            data: { username, gender, date_of_birth, bio, image: imagePath, emergency_name, emergency_phone },
         })
         delete (updatedUser as any).password
         return res.status(200).send({ status: 200, message: 'Ok', user: updatedUser })

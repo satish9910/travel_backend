@@ -51,6 +51,7 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
                 user: {
                     select: {
                         id: true,
+                        username: true,
                         image: true
                     }
                 }

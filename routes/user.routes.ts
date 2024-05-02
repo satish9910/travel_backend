@@ -8,6 +8,8 @@ userRouter
     //@ts-ignore
     .get('/all', userController.get_all_users)
     //@ts-ignore
+    .get("/suggest", userController.getSuggestion)
+    //@ts-ignore
     .get('/feed', userController.get_user_feed)
     //@ts-ignore
     .get('/', userController.get_user_details)

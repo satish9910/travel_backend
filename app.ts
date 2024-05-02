@@ -12,10 +12,13 @@ import ServiceRouter from './routes/service.routes'
 import ExpenseRouter from './routes/expense.routes'
 import cors from "cors";
 const app = express()
-
+import morgan from "morgan";
 app.use(express.static('public'))
 app.use(express.json())
-app.use(statusMonitor())
+// app.use(express.urlencoded({ extended: true }));
+
+// app.use(statusMonitor())
+app.use(morgan("tiny"))
 app.use(cors());
 app.get('/ping', (_req, res) => {
     return res.status(200).send({ status: 200, message: 'pong' })
@@ -26,10 +29,12 @@ app.get('/public/:filename', (req: Request, res: Response) => {
     const filepath = path.resolve('./public/images/' + filename)
     try {
         const stream = fs.createReadStream(filepath)
-        stream.on('data', (chunk) => {
-            res.write(chunk)
-        })
+        stream.on('data', (chunk) => res.write(chunk))
         stream.on('end', () => res.end())
+        stream.on('error', (err) => {
+            return res.sendStatus(404)
+
+        })
     } catch (err) {
         return res.sendStatus(404)
     }
@@ -51,6 +56,6 @@ app.use('/expense', middleware.AuthMiddleware, ExpenseRouter)
 
 app.use(middleware.ErrorHandler)
 app.all('*', (_req, res) => {
-    res.status(200).send({ status: 404, error: 'Not found', error_description: 'route or file not found.' })
+    res.status(200).send({ status: 404, error: 'Not found', error_description: `(${_req.url}), route or file not found.` })
 })
 export default app

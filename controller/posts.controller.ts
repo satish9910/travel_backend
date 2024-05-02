@@ -8,14 +8,16 @@ const prisma = new PrismaClient()
 export const CreatePost = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const body = req.body
+    console.log(req.body);
     if (!helper.isValidatePaylod(body, ['description']) || !req.file) {
         return res
             .status(200)
             .send({ status: 200, error: 'Invalid payload', error_description: 'description & image is required.' })
     }
+    console.log(req.file.filename);
     const post = await prisma.post.create({
         data: {
-            image: req.file?.filename,
+            image: `${process.env.BACKEND_BASE_URL}/public/${req.file?.filename}`,
             description: body.description,
             user_id: user.id,
             media_type: body.media_type

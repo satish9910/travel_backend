@@ -44,6 +44,16 @@ const sendMail = (to: string, subject: string, body: string) => {
         text: body,
     })
 }
-
-const helper = { isValidatePaylod, isValidDateFormat, sendMail }
+const imageUrlGen = (filePath: string) => {
+    const baseUrl = process.env.BACKEND_BASE_URL!
+    // if (baseUrl.includes(process.env.PORT!)) {
+    const gen_url = process.env.BACKEND_BASE_URL! + "/images/" + filePath;
+    return gen_url
+    // } else {
+    // const gen_url = process.env.BACKEND_BASE_URL! + `:${process.env.PORT}` + "/images/" + filePath;
+    // return gen_url
+    // }
+}
+const helper = { isValidatePaylod, isValidDateFormat, sendMail, imageUrlGen }
 export default helper
+

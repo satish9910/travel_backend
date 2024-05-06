@@ -96,10 +96,11 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
     if (req.file) {
         imagePath = req.file.filename
     }
+    let imageUrl;
+    if (imagePath) imageUrl = helper.imageUrlGen(imagePath);
     try {
         const updatedUser = await prisma.user.update({
-            where: { id: user.id },
-            data: { username, gender, date_of_birth, bio, image: imagePath, emergency_name, emergency_phone },
+            where: { id: user.id }, data: { username, gender, date_of_birth, bio, image: imageUrl, emergency_name, emergency_phone },
         })
         delete (updatedUser as any).password
         return res.status(200).send({ status: 200, message: 'Ok', user: updatedUser })
@@ -117,7 +118,7 @@ const Get_follower = async (req: ExtendedRequest, res: Response, next: NextFunct
     }
     try {
         const followers = await prisma.follows.findMany({ where: { user_id: user.id, } })
-        return res.status(200).send({ status: 200, message: 'Ok', followers: followers ,count: followerCount });
+        return res.status(200).send({ status: 200, message: 'Ok', followers: followers, count: followerCount });
     } catch (err) {
         return next(err);
     }
@@ -132,7 +133,14 @@ const GET_following = async (req: ExtendedRequest, res: Response, next: NextFunc
         return next(err)
     }
     try {
-        following = await prisma.follows.findMany({ where: { follower_id: user.id } })
+        following = await prisma.follows.findMany({ where: { follower_id: user.id }, select: { user: true } })
+        following = following.map((obj) => obj.user)
+        const followingIds = following.map((obj) => obj.id);
+        for (let i = 0; i < followingIds.length; i++) {
+            const count = await prisma.follows.count({ where: { user_id: followingIds[i] } });
+            //@ts-ignore
+            following[i].follower_count = count;
+        }
         return res.status(200).send({ status: 200, message: 'Ok', following: following, count: followingCount })
     } catch (err) {
         return next(err)

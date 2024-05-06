@@ -8,25 +8,21 @@ const prisma = new PrismaClient()
 export const CreatePost = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const body = req.body
-    console.log(req.body);
+    // console.log(req.body);
     if (!helper.isValidatePaylod(body, ['description']) || !req.file) {
         return res
             .status(200)
             .send({ status: 200, error: 'Invalid payload', error_description: 'description & image is required.' })
     }
-    console.log(req.file.filename);
     const post = await prisma.post.create({
         data: {
-            image: `${process.env.BACKEND_BASE_URL}/public/${req.file?.filename}`,
+            image: helper.imageUrlGen(req.file.filename),
             description: body.description,
             user_id: user.id,
             media_type: body.media_type
         },
     })
     return res.status(200).send({ status: 201, message: 'Created', post: post })
-    // return res
-    //     .status(200)
-    //     .send({ status: 500, error: 'Incomplete route', error_description: 'post creation in db is pending' })
 }
 
 export const GetOnlyVideos = async (req: ExtendedRequest, res: Response, _next: NextFunction) => {
@@ -90,6 +86,7 @@ export const DeletePost = async (req: ExtendedRequest, res: Response, next: Next
         // fs.
         return res.status(200).send({ status: 202, message: 'Accepted', post: deleted_post })
     } catch (err) {
+        console.log(err)
         return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Post not found.' })
     }
 }

@@ -17,7 +17,7 @@ const Login = async (req: Request, res: Response, next: NextFunction) => {
     if (!isValidPayload) {
         return res
             .status(200)
-            .send({ status: 400, error: 'Invalid payload', error_description: 'username, pasword are requried.' })
+            .send({ status: 400, error: 'Invalid payload', error_description: 'username, password are requried.' })
     }
     let hash_password: string | Buffer = crypto.pbkdf2Sync(
         body?.password,
@@ -91,7 +91,6 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
                 })
         }
     })
-
 }
 
 const SendOtp = async (req: Request, res: Response, _next: NextFunction) => {
@@ -169,5 +168,45 @@ const VerifyOtp = async (req: Request, res: Response, next: NextFunction) => {
         return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'OTP is not valid.' })
     }
 }
-const authController = { Login, ForgotPassword, Signup, SendOtp, VerifyOtp }
+
+const HostLogin = async (req: Request, res: Response, next: NextFunction) => {
+    const body = req.body
+    
+    if (!helper.isValidatePaylod(body, ['username', 'password'])) {
+        return res.status(200).send({
+            status: 400,
+            error: 'Invalid payload',
+            error_description: 'username, password are requried.',
+        })
+    }
+    const userDetails = await prisma.host.findUnique({
+        where: { username: body.username, password: body.password },
+    })
+    
+    if (!userDetails) {
+        return res.status(200).send({
+            status: 200,
+            error: 'Invalid credentials.',
+            error_description: 'username or password is not valid',
+        })
+    }
+    const token = jwt.sign({ phone: userDetails.phone }, process.env.JWT_SECRET!, {
+        expiresIn: '7d',
+    })
+
+    return res.status(200).send({
+        status: 200,
+        message: 'Ok',
+        user: { 
+            username: userDetails.username,
+            name: userDetails.name,
+            id: userDetails.id,
+            photo: userDetails.photo,
+        },
+        token: token
+    })
+
+}
+
+const authController = { Login, ForgotPassword, Signup, SendOtp, VerifyOtp, HostLogin }
 export default authController

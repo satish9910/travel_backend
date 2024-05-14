@@ -2,13 +2,11 @@ import type { Response, NextFunction } from 'express'
 import { ExtendedRequest } from '../utils/middleware'
 import helper from '../utils/helpers'
 import { PrismaClient } from '@prisma/client'
-import fs from 'fs/promises'
 const prisma = new PrismaClient()
 
 export const CreatePost = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const body = req.body
-    // console.log(req.body);
     if (!helper.isValidatePaylod(body, ['description']) || !req.file) {
         return res
             .status(200)

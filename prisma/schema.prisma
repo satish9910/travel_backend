@@ -104,12 +104,16 @@ model Service {
   id          Int    @id @default(autoincrement())
   name        String
   description String
-  host_id     Int
-  pincode     Int
+  destination String
+  duration    Int
+  services    Json
+  itinerary   Json
+  images      Json?
   rating      Float  @default(0)
   price       Int
-  duration    Int
-  trip        Trip[]
+  trip        Trip[] 
+  host_id     Int
+  host        Host   @relation(fields: [host_id], references: [id])
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -120,13 +124,15 @@ model Trip {
   user_id          Int
   destination      String
   number_of_people Int
-  pincode          Int
   start_date       String
   end_date         String
-  service_id       Int
+  service_id       Int?
+  cost             Int
+  host_id          Int
   expense          Expense[]
+  host             Host @relation(fields: [host_id], references: [id])
 
-  service    Service  @relation(fields: [service_id], references: [id])
+  service    Service?  @relation(fields: [service_id], references: [id], onDelete: SetNull)
   user       User     @relation(fields: [user_id], references: [id])
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -144,4 +150,31 @@ model Expense {
   trip       Trip     @relation(fields: [trip_id], references: [id])
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+}
+
+model Destination {
+  id          Int      @id @default(autoincrement())
+  destination String
+  pincode     String
+  description String?
+  image       String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
+
+model Host {
+  id         Int       @id @default(autoincrement())
+  type       String    @default("host")
+  username   String    @unique
+  password   String
+  name       String
+  description String
+  google_rating Float
+  google_rating_photo String?
+  phone      String
+  email      String?
+  photo      String?
+  trips      Trip[]
+  services   Service[]
+  created_at DateTime  @default(now())
 }

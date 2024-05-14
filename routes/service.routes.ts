@@ -9,9 +9,13 @@ ServiceRouter
     //@ts-ignore
     .get('/all', serviceController.GetAllServices)
     //@ts-ignore
-    .get('/', serviceController.GetServicesByPincode)
+    .get('/', serviceController.GetServicesByDestination)
     //@ts-ignore
     .get('/:id', serviceController.getSpecificService)
+    //@ts-ignore
+    .put('/:id', serviceController.editServiceById)
+    //@ts-ignore
+    .get('/host/:id', serviceController.getServicesByHostId)
     //@ts-ignore
     .delete('/:id', serviceController.deleteService)
 

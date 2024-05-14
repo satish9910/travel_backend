@@ -13,6 +13,8 @@ import ExpenseRouter from './routes/expense.routes'
 import cors from "cors";
 const app = express()
 import morgan from "morgan";
+import DestinationRouter from './routes/destination.routes'
+import HostRouter from './routes/host.routes'
 app.use(express.static('public'))
 app.use(express.json())
 // app.use(express.urlencoded({ extended: true }));
@@ -50,7 +52,11 @@ app.use('/action', middleware.AuthMiddleware, actionRouter)
 // @ts-ignore
 app.use('/trip', middleware.AuthMiddleware, tripRouter)
 // @ts-ignore
-app.use('/service', ServiceRouter)
+app.use('/service',middleware.HostAuthMiddleware, ServiceRouter)
+// @ts-ignore
+app.use('/host',middleware.HostAuthMiddleware, HostRouter)
+// @ts-ignore
+app.use('/destination', DestinationRouter)
 // @ts-ignore
 app.use('/expense', middleware.AuthMiddleware, ExpenseRouter)
 

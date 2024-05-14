@@ -8,5 +8,6 @@ authRouter.post('/signup', authController.Signup)
 authRouter.post('/forgot', authController.ForgotPassword)
 authRouter.post('/sendotp', authController.SendOtp)
 authRouter.post('/verify', authController.VerifyOtp)
+authRouter.post('/host-login', authController.HostLogin)
 
 export default authRouter

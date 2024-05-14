@@ -3,7 +3,7 @@ import { ExtendedRequest } from '../utils/middleware'
 import helper from '../utils/helpers'
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
-
+    
 export const CreateTrip = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const body = req.body
@@ -11,7 +11,7 @@ export const CreateTrip = async (req: ExtendedRequest, res: Response, next: Next
     if (!service) {
         return res.status(404).send({ status: 404, error: 'Service not found', error_description: 'Service not found for the given id.' })
     }
-    if (!helper.isValidatePaylod(body, ['destination', 'start_date', 'end_date', 'number_of_people', 'service_id'])) {
+    if (!helper.isValidatePaylod(body, ['destination', 'start_date', 'number_of_people', 'service_id', 'cost'])) {
         return res
             .status(200)
             .send({ status: 200, error: 'Invalid payload', error_description: 'destination, start_date, end_date is required.' })
@@ -23,13 +23,14 @@ export const CreateTrip = async (req: ExtendedRequest, res: Response, next: Next
     }
     const trip = await prisma.trip.create({
         data: {
-            destination: body.destination,             //destination should be automatically calculated based on pincode
+            destination: body.destination,             
             start_date: body.start_date,
-            end_date: body.end_date,          //end date should be automatically calculated based on start date and duration
-            number_of_people: body.number_of_people,    //number of people should be automatically calculated based on service capacity
+            end_date: body.end_date,          
+            number_of_people: body.number_of_people,    
             service_id: body.service_id,                
             user_id: user.id,
-            pincode: service.pincode,
+            cost: body.cost,
+            host_id: service.host_id,
         },
     })
     return res.status(200).send({ status: 201, message: 'Created', trip: trip })
@@ -60,12 +61,13 @@ export const GetSpecificTrip = async (req: ExtendedRequest, res: Response, next:
             .send({ status: 400, error: 'Invalid payload', error_description: 'id(trip) should be a number.' })
     }
 
-    const trip = await prisma.trip.findFirst({ where: { id: tripId, user_id: user.id }})
+    const trip = await prisma.trip.findFirst({ where: { id: tripId, user_id: user.id }, include: {service: true}},)
     if (!trip) {
         return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Trip not found.' })
     }
     return res.status(200).send({ status: 200, message: 'Ok', trip })
 }
+
 
 
 const tripController = { CreateTrip, GetTrips, GetSpecificTrip }

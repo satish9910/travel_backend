@@ -19,6 +19,7 @@ const get_all_users = async (req: ExtendedRequest, res: Response, next: NextFunc
             take: Number(limit),
             where: { NOT: { id: req.user.id } },
         })
+        delete (users as any).password
         return res.status(200).send({ status: 200, message: 'Ok', users: users })
     } catch (err) {
         return next(err)
@@ -51,17 +52,18 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
                     select: {
                         id: true,
                         username: true,
-                        image: true
-                    }
-                }
-            }
+                        image: true,
+                    },
+                },
+                comment: true
+            },
         })
         for (let i = 0; i < fetchPosts.length; i++) {
             const isLiked = await prisma.likes.findFirst({
-                where: { post_id: fetchPosts[i].id, user_id: req.user.id }
+                where: { post_id: fetchPosts[i].id, user_id: req.user.id },
             })
             //@ts-ignore
-            fetchPosts[i].isLiked = isLiked ? true : false;
+            fetchPosts[i].isLiked = isLiked ? true : false
         }
         return res.status(200).send({ status: 200, message: 'Ok', posts: fetchPosts })
     } catch (err) {
@@ -70,7 +72,9 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
 }
 
 const get_user_details = (req: ExtendedRequest, res: Response, _next: NextFunction) => {
-    return res.status(200).send({ status: 200, message: 'Ok', user: req.user })
+    const user = req.user
+    delete (user as any).password
+    return res.status(200).send({ status: 200, message: 'Ok', user: user })
 }
 
 const update_user = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
@@ -96,13 +100,16 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
     if (req.file) {
         imagePath = req.file.filename
     }
-    let imageUrl;
-    if (imagePath) imageUrl = helper.imageUrlGen(imagePath);
+    let imageUrl
+    if (imagePath) imageUrl = helper.imageUrlGen(imagePath)
     try {
         const updatedUser = await prisma.user.update({
-            where: { id: user.id }, data: { username, gender, date_of_birth, bio, image: imageUrl, emergency_name, emergency_phone },
+            where: { id: user.id },
+            data: { username, gender, date_of_birth, bio, image: imageUrl, emergency_name, emergency_phone },
         })
         delete (updatedUser as any).password
+        delete (updatedUser as any).emergency_name
+        delete (updatedUser as any).emergency_phone
         return res.status(200).send({ status: 200, message: 'Ok', user: updatedUser })
     } catch (err) {
         return next(err)
@@ -110,37 +117,44 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
 }
 const Get_follower = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
-    let followerCount = 0;
+    let followerCount = 0
     try {
         followerCount = await prisma.follows.count({ where: { user_id: user.id } })
     } catch (err) {
-        return next(err);
+        return next(err)
     }
     try {
-        const followers = await prisma.follows.findMany({ where: { user_id: user.id, } })
-        return res.status(200).send({ status: 200, message: 'Ok', followers: followers, count: followerCount });
+        const followers = await prisma.follows.findMany({ where: { user_id: user.id } })
+        
+        return res.status(200).send({ status: 200, message: 'Ok', followers: followers, count: followerCount })
     } catch (err) {
-        return next(err);
+        return next(err)
     }
 }
 
 const GET_following = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
-    let followingCount = 0, following = [];
+    let followingCount = 0,
+        following = []
     try {
         followingCount = await prisma.follows.count({ where: { follower_id: user.id } })
     } catch (err) {
         return next(err)
     }
     try {
-        following = await prisma.follows.findMany({ where: { follower_id: user.id }, select: { user: true } })
-        following = following.map((obj) => obj.user)
-        const followingIds = following.map((obj) => obj.id);
-        for (let i = 0; i < followingIds.length; i++) {
-            const count = await prisma.follows.count({ where: { user_id: followingIds[i] } });
-            //@ts-ignore
-            following[i].follower_count = count;
-        }
+        following = await prisma.follows.findMany({
+            where: { follower_id: user.id },
+            select: {
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        image: true,
+                        is_verified: true,
+                    },
+                },
+            },
+        })
         return res.status(200).send({ status: 200, message: 'Ok', following: following, count: followingCount })
     } catch (err) {
         return next(err)
@@ -163,31 +177,64 @@ const getSuggestion = async (req: ExtendedRequest, res: Response, next: NextFunc
             include: {
                 _count: {
                     select: {
-                        Follows_by: true
-                    }
-                }
-            }
+                        Follows_by: true,
+                    },
+                },
+            },
         })
         for (let i = 0; i < users.length; i++) {
-            const user = users[i];
+            const user = users[i]
             const isFollowedByLiveUser = await prisma.follows.findFirst({
-                where: { user_id: user.id, follower_id: req.user.id }, select: {
+                where: { user_id: user.id, follower_id: req.user.id },
+                select: {
                     follower_id: true,
-                    user_id: true
-                }
-            });
+                    user_id: true,
+                },
+            })
             // @ts-ignore
             users[i]['isFollows'] = isFollowedByLiveUser ? true : false
             //@ts-ignore
-            users[i].followerCount = users[i]._count.Follows_by;
+            users[i].followerCount = users[i]._count.Follows_by
             //@ts-ignore
             delete users[i]._count
         }
+        delete (users as any).password
+        delete (users as any).emergency_name
+        delete (users as any).emergency_phone
+
         return res.status(200).send({ status: 200, message: 'Ok', users: users })
     } catch (err) {
         return next(err)
     }
 }
-const userController = { getSuggestion, get_all_users, get_user_feed, get_user_details, update_user, Get_follower, GET_following }
+
+const userTravelingStatus = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const { is_traveling } = req.body
+    if (typeof is_traveling !== 'boolean') {
+        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Invalid Payload' })
+    }
+    try {
+        const updatedUser = await prisma.user.update({
+            where: { id: user.id },
+            data: { status: is_traveling },
+        })
+        delete (updatedUser as any).password
+        return res.status(200).send({ status: 200, message: 'Ok', user: { updatedUser } })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const userController = {
+    getSuggestion,
+    get_all_users,
+    get_user_feed,
+    get_user_details,
+    update_user,
+    Get_follower,
+    GET_following,
+    userTravelingStatus,
+}
 
 export default userController

@@ -42,6 +42,16 @@ export const GetTrips = async (req: ExtendedRequest, res: Response, next: NextFu
         where: {
             user_id: user.id,
         },
+        include: {
+            service: true,
+            host: {
+                select: {
+                    name: true,
+                    username: true,
+                    photo: true,
+                },
+            },
+        },
     })
     return res.status(200).send({ status: 200, trips: trips })
 }

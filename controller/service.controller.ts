@@ -17,13 +17,11 @@ export const CreateService = async (req: ExtendedRequest, res: Response, next: N
             'itinerary',
         ])
     ) {
-        return res
-            .status(200)
-            .send({
-                status: 200,
-                error: 'Invalid payload',
-                error_description: 'name, description, destination, price, host id, duration, itinerary is required.',
-            })
+        return res.status(200).send({
+            status: 200,
+            error: 'Invalid payload',
+            error_description: 'name, description, destination, price, host id, duration, itinerary is required.',
+        })
     }
     const service = await prisma.service.create({
         data: {
@@ -163,13 +161,11 @@ const editServiceById = async (req: ExtendedRequest, res: Response, next: NextFu
     const body = req.body
 
     if (!helper.isValidatePaylod(body, ['name', 'description', 'price', 'services', 'duration', 'itinerary'])) {
-        return res
-            .status(200)
-            .send({
-                status: 200,
-                error: 'Invalid payload',
-                error_description: 'name, description, price, services, duration, itinerary is required.',
-            })
+        return res.status(200).send({
+            status: 200,
+            error: 'Invalid payload',
+            error_description: 'name, description, price, services, duration, itinerary is required.',
+        })
     }
 
     const service = await prisma.service.update({
@@ -188,6 +184,38 @@ const editServiceById = async (req: ExtendedRequest, res: Response, next: NextFu
     return res.status(200).send({ status: 200, message: 'Updated', service })
 }
 
+const uploadServicePics = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const files = req.files
+        const serviceId = req.body.service_id
+        if (!serviceId) {
+            return res
+                .status(200)
+                .send({ status: 400, error: 'Invalid payload', error_description: 'service_id is required in body.' })
+        }
+        if (!files) {
+            return res
+                .status(200)
+                .send({ status: 400, error: 'Invalid payload', error_description: 'files are required.' })
+        }
+        if (!Array.isArray(files) || files.length > 5) {
+            return res
+                .status(200)
+                .send({ status: 400, error: 'Invalid payload', error_description: 'Maximum 5 files are allowed.' })
+        }
+        const images = files.map((file: any) => helper.imageUrlGen(file))
+        const service = await prisma.service.update({
+            where: { id: Number(serviceId) },
+            data: {
+                images: images,
+            },
+        })
+        return res.status(200).send({ status: 200, message: 'Pictures uploaded', service })
+    } catch (err) {
+        return next(err)
+    }
+}
+
 const serviceController = {
     CreateService,
     GetAllServices,
@@ -196,5 +224,6 @@ const serviceController = {
     deleteService,
     getServicesByHostId,
     editServiceById,
+    uploadServicePics,
 }
 export default serviceController

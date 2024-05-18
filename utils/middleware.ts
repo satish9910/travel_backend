@@ -4,7 +4,8 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export type ExtendedRequest = Request & {
-    user: any
+    user: any,
+    host:any
 }
 
 const AuthMiddleware = async (req: ExtendedRequest, res: Response, next: NextFunction) => {

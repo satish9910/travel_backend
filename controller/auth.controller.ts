@@ -27,7 +27,7 @@ const Login = async (req: Request, res: Response, next: NextFunction) => {
         DIGEST_ALGO
     )
     hash_password = hash_password.toString('hex')
-    // console.log(hash_password);
+    //remove password from response
     const userDetails = await prisma.user.findUnique({
         where: { username: body.username, password: hash_password },
     })
@@ -38,6 +38,7 @@ const Login = async (req: Request, res: Response, next: NextFunction) => {
             error_description: 'username or password is not valid',
         })
     }
+    delete (userDetails as any).password
     const token = jwt.sign({ phone: userDetails.phone }, process.env.JWT_SECRET!, {
         expiresIn: '7d',
     })
@@ -63,7 +64,7 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
             error_description: 'username, phone, password are requried.',
         })
     }
-    const { phone, password, username } = req.body
+    const { phone, password, username, referredByCode } = req.body
     let isAlreadyExists: any = false
     try {
         isAlreadyExists = await prisma.user.findFirst({ where: { OR: [{ phone }, { username: username }] } })
@@ -75,18 +76,23 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
             .status(200)
             .send({ status: 400, error: 'BAD REQUEST', error_description: 'username already exists.' })
     }
+
+    function generateReferralCode(){
+        return 'EZI'+ Math.floor(1000 + Math.random() * 9000) + username.slice(0, 3).toUpperCase() 
+    }
+    const referralCode = generateReferralCode()
+
     crypto.pbkdf2(password, SALT_ROUND, ITERATION, KEYLENGTH, DIGEST_ALGO, (err, hash_password: Buffer | string) => {
         hash_password = hash_password.toString('hex')
         if (err) return next(err)
         else {
             prisma.user
-                .create({ data: { phone, password: hash_password, username } })
+                .create({ data: { phone, password: hash_password, username, referredByCode: referredByCode, userReferralCode: referralCode } })
                 .then((r) => {
                     delete (r as any).password
                     return res.status(200).send({ status: 201, message: 'Created', user: r })
                 })
                 .catch((err) => {
-                    // console.log(err);-
                     return next(err)
                 })
         }

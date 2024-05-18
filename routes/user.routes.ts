@@ -10,6 +10,8 @@ userRouter
     //@ts-ignore
     .get("/suggest", userController.getSuggestion)
     //@ts-ignore
+    .put("/status", userController.userTravelingStatus)
+    //@ts-ignore
     .get('/feed', userController.get_user_feed)
     //@ts-ignore
     .get('/', userController.get_user_details)
@@ -19,4 +21,5 @@ userRouter
     .get('/followers', userController.Get_follower)
     //@ts-ignore
     .get('/following', userController.GET_following)
+
 export default userRouter

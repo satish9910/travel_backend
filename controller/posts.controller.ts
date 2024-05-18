@@ -17,7 +17,7 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
             image: helper.imageUrlGen(req.file.filename),
             description: body.description,
             user_id: user.id,
-            media_type: body.media_type
+            media_type: body.media_type,
         },
     })
     return res.status(200).send({ status: 201, message: 'Created', post: post })
@@ -37,6 +37,23 @@ export const GetPosts = async (req: ExtendedRequest, res: Response, _next: NextF
     return res.status(200).send({ status: 200, message: 'Ok', posts })
 }
 
+export const GetPostsByUserId = async (req: ExtendedRequest, res: Response, _next: NextFunction) => {
+    const id = req.body.userId
+    const posts = await prisma.post.findMany({
+        where: { user_id: id },
+        include: {
+            comment: true,
+        },
+    })
+    const user = await prisma.user.findFirst({ where: { id: id } })
+    const follower_count = await prisma.follows.count({ where: { user_id: id } })
+    const trip_count = await prisma.trip.count({ where: { user_id: id } })
+
+    return res
+        .status(200)
+        .send({ status: 200, message: 'Ok', posts, user_follower_count: follower_count, user_trip_count: trip_count, user: {user_id: user?.id, username: user?.username, image: user?.image} })
+}
+
 export const GetSpecificPost = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     let postId: string | number = req.params.id
     if (!postId) {
@@ -51,11 +68,27 @@ export const GetSpecificPost = async (req: ExtendedRequest, res: Response, next:
             .send({ status: 400, error: 'Invalid payload', error_description: 'id(post) should be a number.' })
     }
 
-    const post = await prisma.post.findFirst({ where: { id: postId }, include: { comment: true } })
+    const post = await prisma.post.findFirst({
+        where: { id: postId },
+        include: {
+            comment: true,
+            user: {
+                select: {
+                    id: true,
+                    username: true,
+                    image: true,
+                },
+            },
+        },
+    })
+    const follower_count = await prisma.follows.count({ where: { user_id: post?.user_id } })
+    const trip_count = await prisma.trip.count({ where: { user_id: post?.user_id } })
     if (!post) {
         return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Post not found.' })
     }
-    return res.status(200).send({ status: 200, message: 'Ok', post })
+    return res
+        .status(200)
+        .send({ status: 200, message: 'Ok', post, user_follower_count: follower_count, user_trip_count: trip_count })
 }
 
 export const DeletePost = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
@@ -88,5 +121,5 @@ export const DeletePost = async (req: ExtendedRequest, res: Response, next: Next
         return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Post not found.' })
     }
 }
-const postController = { CreatePost, GetPosts, GetSpecificPost, DeletePost, GetOnlyVideos }
+const postController = { CreatePost, GetPosts, GetSpecificPost, DeletePost, GetOnlyVideos, GetPostsByUserId }
 export default postController

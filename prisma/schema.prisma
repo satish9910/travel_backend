@@ -32,6 +32,9 @@ model User {
   otp             Otp?
   trips           Trip[]
   expense         Expense[]
+  userReferralCode   String?
+  referredByCode     String?
+  status            Boolean @default(false) 
 
   post       Post[]
   Comment    Comment[]
@@ -94,7 +97,6 @@ model Follows {
   id          Int @id @default(autoincrement())
   user_id     Int
   follower_id Int
-
   user       User     @relation(fields: [user_id], references: [id])
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -129,6 +131,7 @@ model Trip {
   service_id       Int?
   cost             Int
   host_id          Int
+  isBookmarked     Boolean @default(false)
   expense          Expense[]
   host             Host @relation(fields: [host_id], references: [id])
 
@@ -168,8 +171,8 @@ model Host {
   username   String    @unique
   password   String
   name       String
-  description String
-  google_rating Float
+  description String?
+  google_rating Float?
   google_rating_photo String?
   phone      String
   email      String?

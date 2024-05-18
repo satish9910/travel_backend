@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import serviceController from '../controller/service.controller'
+import { upload } from '..'
 const ServiceRouter = Router()
 
 //@ts-ignore
@@ -18,7 +19,8 @@ ServiceRouter
     .get('/host/:id', serviceController.getServicesByHostId)
     //@ts-ignore
     .delete('/:id', serviceController.deleteService)
-
+    //@ts-ignore
+    .put('/servicePics', upload.array("files", 5), serviceController.uploadServicePics)
     
 export default ServiceRouter
 

@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import hostController from '../controller/host.controller'
+import { upload } from '..';
 const HostRouter = Router()
 
 //@ts-ignore
@@ -10,5 +11,7 @@ HostRouter
     .get('/trip/:id', hostController.GetSpecificTripHost)
     //@ts-ignore
     .get('/profile/:id', hostController.getHostProfile)
+    //@ts-ignore
+    .post("/profile/:id", upload.single("image"), hostController.updateHostProfile);
     
 export default HostRouter

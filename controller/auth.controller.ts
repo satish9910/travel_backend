@@ -13,7 +13,6 @@ const DIGEST_ALGO = 'sha512'
 const Login = async (req: Request, res: Response, next: NextFunction) => {
     const body = req.body
     const isValidPayload = helper.isValidatePaylod(body, ['username', 'password'])
-    console.log(isValidPayload);
     if (!isValidPayload) {
         return res
             .status(200)
@@ -27,7 +26,6 @@ const Login = async (req: Request, res: Response, next: NextFunction) => {
         DIGEST_ALGO
     )
     hash_password = hash_password.toString('hex')
-    //remove password from response
     const userDetails = await prisma.user.findUnique({
         where: { username: body.username, password: hash_password },
     })
@@ -74,11 +72,11 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
     if (isAlreadyExists) {
         return res
             .status(200)
-            .send({ status: 400, error: 'BAD REQUEST', error_description: 'username already exists.' })
+            .send({ status: 400, error: 'BAD REQUEST', error_description: 'username or phone already exists.' })
     }
 
-    function generateReferralCode(){
-        return 'EZI'+ Math.floor(1000 + Math.random() * 9000) + username.slice(0, 3).toUpperCase() 
+    function generateReferralCode() {
+        return 'EZI' + Math.floor(1000 + Math.random() * 9000) + username.slice(0, 3).toUpperCase()
     }
     const referralCode = generateReferralCode()
 
@@ -87,7 +85,15 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
         if (err) return next(err)
         else {
             prisma.user
-                .create({ data: { phone, password: hash_password, username, referredByCode: referredByCode, userReferralCode: referralCode } })
+                .create({
+                    data: {
+                        phone,
+                        password: hash_password,
+                        username,
+                        referredByCode: referredByCode,
+                        userReferralCode: referralCode,
+                    },
+                })
                 .then((r) => {
                     delete (r as any).password
                     return res.status(200).send({ status: 201, message: 'Created', user: r })
@@ -105,7 +111,7 @@ const SendOtp = async (req: Request, res: Response, _next: NextFunction) => {
     }
     const { phone } = req.body
     // const otp = Math.floor(10000 + Math.random() * 90000)
-    const otp = 1234;
+    const otp = 1234
     const user = await prisma.user.findFirst({ where: { phone } })
     if (!user) return res.status(200).send({ status: 404, error: 'Not found', error_description: 'user not found' })
     const previousSendOtp = await prisma.otp.findUnique({ where: { user_id: user.id } })
@@ -146,7 +152,7 @@ const VerifyOtp = async (req: Request, res: Response, next: NextFunction) => {
     }
     const user = await prisma.user.findFirst({ where: { phone } })
     if (user?.is_verified) {
-        return res.status(200).send({ status: 400, error: "Bad Request", error_description: "User already verified" });
+        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'User already verified' })
     }
     if (!user)
         return res
@@ -177,7 +183,7 @@ const VerifyOtp = async (req: Request, res: Response, next: NextFunction) => {
 
 const HostLogin = async (req: Request, res: Response, next: NextFunction) => {
     const body = req.body
-    
+
     if (!helper.isValidatePaylod(body, ['username', 'password'])) {
         return res.status(200).send({
             status: 400,
@@ -188,7 +194,7 @@ const HostLogin = async (req: Request, res: Response, next: NextFunction) => {
     const userDetails = await prisma.host.findUnique({
         where: { username: body.username, password: body.password },
     })
-    
+
     if (!userDetails) {
         return res.status(200).send({
             status: 200,
@@ -203,16 +209,87 @@ const HostLogin = async (req: Request, res: Response, next: NextFunction) => {
     return res.status(200).send({
         status: 200,
         message: 'Ok',
-        user: { 
+        user: {
             username: userDetails.username,
             name: userDetails.name,
             id: userDetails.id,
             photo: userDetails.photo,
         },
-        token: token
+        token: token,
     })
-
 }
 
-const authController = { Login, ForgotPassword, Signup, SendOtp, VerifyOtp, HostLogin }
+const socialLogin = async (req: Request, res: Response, next: NextFunction) => {
+    const body = req.body
+    if (!helper.isValidatePaylod(body, ['email', 'password'])) {
+        return res.status(200).send({
+            status: 400,
+            error: 'Invalid Payload',
+            error_description: 'email, password are requried.',
+        })
+    }
+    const { email, password } = body
+    let hash_password: string | Buffer = crypto.pbkdf2Sync(
+        body?.password,
+        SALT_ROUND,
+        ITERATION,
+        KEYLENGTH,
+        DIGEST_ALGO
+    )
+    hash_password = hash_password.toString('hex')
+    const userDetails = await prisma.user.findUnique({
+        where: { email: body.email, password: hash_password },
+    })
+
+    if (userDetails) {
+        delete (userDetails as any).password
+        const token = jwt.sign({ email: userDetails.email }, process.env.JWT_SECRET!, {
+            expiresIn: '7d',
+        })
+
+        return res.status(200).send({
+            status: 200,
+            message: 'Ok',
+            user: userDetails,
+            token
+        })
+    }
+    return socialSignUp(req, res, next, email, password)
+}
+
+const socialSignUp = async (req: Request, res: Response, next: NextFunction, email: string, password: string) => {
+    let isAlreadyExists: any = false
+    try {
+        isAlreadyExists = await prisma.user.findFirst({ where: { email } })
+    } catch (err) {
+        return next(err)
+    }
+    if (isAlreadyExists) {
+        return res.status(200).send({ status: 400, error: 'BAD REQUEST', error_description: 'user already exists.' })
+    }
+    const token = jwt.sign({ email: email }, process.env.JWT_SECRET!, {
+        expiresIn: '7d',
+    })
+    function generateReferralCode() {
+        return 'EZI' + Math.floor(1000 + Math.random() * 9000) + email.slice(0, 3).toUpperCase()
+    }
+    const referralCode = generateReferralCode()
+    crypto.pbkdf2(password, SALT_ROUND, ITERATION, KEYLENGTH, DIGEST_ALGO, (err, hash_password: Buffer | string) => {
+        hash_password = hash_password.toString('hex')
+        if (err) return next(err)
+        else {
+            prisma.user
+                .create({ data: { email, password: hash_password,  userReferralCode: referralCode } })
+                .then((r) => {
+                    delete (r as any).password
+                    return res.status(200).send({ status: 201, message: 'Created', user: r, token })
+                })
+                .catch((err) => {
+                    return next(err)
+                })
+        }
+    })
+}
+
+const authController = { Login, ForgotPassword, Signup, SendOtp, VerifyOtp, HostLogin, socialLogin }
 export default authController

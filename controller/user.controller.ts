@@ -46,16 +46,16 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
         })
         const userIds = userIdsObjArr.map((user_id) => user_id.user_id)
         const fetchPosts = await prisma.post.findMany({
-            where: { user_id: { in: userIds } },
+            where: { user_id: { in: [...userIds, req.user.id] } },
             include: {
-                user: {
-                    select: {
-                        id: true,
-                        username: true,
-                        image: true,
-                    },
+            user: {
+                select: {
+                id: true,
+                username: true,
+                image: true,
                 },
-                comment: true
+            },
+            comment: true
             },
         })
         for (let i = 0; i < fetchPosts.length; i++) {

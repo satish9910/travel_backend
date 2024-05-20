@@ -56,8 +56,8 @@ const getHostProfile = async (req: ExtendedRequest, res: Response, next: NextFun
 }
 
 const updateHostProfile = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-    const hostId = Number(req.query.id)
-    
+    const hostId: string | number = req.params.id
+
     const file = req.file?.filename
     console.log(file)
 
@@ -70,9 +70,20 @@ const updateHostProfile = async (req: ExtendedRequest, res: Response, next: Next
     if (req.file?.filename) {
         imageUrl = helper.imageUrlGen(req.file.filename)
     }
-    const host = await prisma.host.update({ where: { id: hostId }, data: { ...req.body, photo: imageUrl } })
+    const host = await prisma.host.update({ where: { id: Number(hostId) }, data: { ...req.body, photo: imageUrl } })
     return res.status(200).send({ status: 200, host })
 }
 
-const hostController = { getHostedTrips, GetSpecificTripHost, getHostProfile, updateHostProfile }
+const updateProfile = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const hostId: string | number = req.params.id
+    console.log(hostId);
+    
+    const {name, description, email} = req.body
+    const google_rating = parseFloat(req.body.google_rating)
+    const host = await prisma.host.update({ where: { id: Number(hostId) }, data: { name, description, email, google_rating } })
+    return res.status(200).send({ updated: host })
+}
+
+
+const hostController = { getHostedTrips, GetSpecificTripHost, getHostProfile, updateHostProfile, updateProfile }
 export default hostController

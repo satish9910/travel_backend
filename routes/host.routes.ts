@@ -12,6 +12,8 @@ HostRouter
     //@ts-ignore
     .get('/profile/:id', hostController.getHostProfile)
     //@ts-ignore
-    .post("/profile/:id", upload.single("image"), hostController.updateHostProfile);
+    .post("/profile/:id", upload.single("image"), hostController.updateHostProfile)
+    //@ts-ignore
+    .put('/profile/update/:id', hostController.updateProfile)
     
 export default HostRouter

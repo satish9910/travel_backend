@@ -14,31 +14,31 @@ datasource db {
 }
 
 model User {
-  id              Int       @id @default(autoincrement())
-  username        String?    @unique
-  phone           String?   @unique
-  password        String
-  email           String?   @unique
-  image           String?
-  gender          Int? // 0 = female, 1 = male
-  date_of_birth   DateTime?
-  bio             String?
-  emergency_name  String?
-  emergency_phone String?
-  latitude        String?
-  longitude       String?
-  is_verified     Boolean   @default(false)
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
-  otp             Otp?
-  trips           Trip[]
-  expense         Expense[]
-  userReferralCode   String?
-  referredByCode     String?
-  status            Boolean @default(false) 
+  id               Int       @id @default(autoincrement())
+  username         String?   @unique
+  phone            String?   @unique
+  password         String
+  email            String?   @unique
+  image            String?
+  gender           Int? // 0 = female, 1 = male
+  date_of_birth    DateTime?
+  bio              String?
+  emergency_name   String?
+  emergency_phone  String?
+  latitude         String?
+  longitude        String?
+  is_verified      Boolean   @default(false)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  otp              Otp?
+  trips            Trip[]
+  expense          Expense[]
+  userReferralCode String?
+  referredByCode   String?
+  status           Boolean   @default(false)
 
-  post       Post[]
-  Comment    Comment[]
+  post      Post[]
+  Comment   Comment[]
   follows   Follows[] @relation(name: "FollowerUser")
   followers Follows[] @relation(name: "UserFollows")
 }
@@ -62,8 +62,8 @@ model Post {
   comment     Comment[]
   user_id     Int
   user        User      @relation(fields: [user_id], references: [id])
-  latitude   String?
-  longitude  String?
+  latitude    String?
+  longitude   String?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -98,30 +98,36 @@ model Likes {
 }
 
 model Follows {
-  id          Int @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   user_id     Int
   follower_id Int
-  follower    User @relation(name: "FollowerUser", fields: [follower_id], references: [id])
-  user        User @relation(name: "UserFollows", fields: [user_id], references: [id])
+  follower    User     @relation(name: "FollowerUser", fields: [follower_id], references: [id])
+  user        User     @relation(name: "UserFollows", fields: [user_id], references: [id])
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 }
 
-
 model Service {
-  id          Int    @id @default(autoincrement())
-  name        String
-  description String
-  destination String
-  duration    Int
-  services    Json
-  itinerary   Json
-  images      Json?
-  rating      Float  @default(0)
-  price       Int
-  trip        Trip[] 
-  host_id     Int
-  host        Host   @relation(fields: [host_id], references: [id])
+  id              Int     @id @default(autoincrement())
+  name            String
+  description     String
+  destination     String
+  duration        Int
+  services        Json
+  itinerary       Json
+  images          Json?
+  rating          Float   @default(0)
+  price           Int
+  trip            Trip[]
+  host_id         Int
+  host            Host    @relation(fields: [host_id], references: [id])
+  //group
+  type            String     @default("default")
+  start_date      String?
+  end_date        String?
+  pickups         Json?
+  total_seats     Int?
+  available_seats Int?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -137,11 +143,11 @@ model Trip {
   service_id       Int?
   cost             Int
   host_id          Int
-  isBookmarked     Boolean @default(false)
+  isBookmarked     Boolean   @default(false)
   expense          Expense[]
-  host             Host @relation(fields: [host_id], references: [id])
+  host             Host      @relation(fields: [host_id], references: [id])
 
-  service    Service?  @relation(fields: [service_id], references: [id], onDelete: SetNull)
+  service    Service? @relation(fields: [service_id], references: [id], onDelete: SetNull)
   user       User     @relation(fields: [user_id], references: [id])
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -162,30 +168,30 @@ model Expense {
 }
 
 model Destination {
-  id          Int      @id @default(autoincrement())
-  destination String
-  pincode     String
-  description String?
-  image       String?
-  features    Json?
+  id                Int      @id @default(autoincrement())
+  destination       String
+  pincode           String
+  description       String?
+  image             String?
+  features          Json?
   customise_options Json?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
 }
 
 model Host {
-  id         Int       @id @default(autoincrement())
-  type       String    @default("host")
-  username   String    @unique
-  password   String
-  name       String
-  description String?
-  google_rating Float?
+  id                  Int       @id @default(autoincrement())
+  type                String    @default("host")
+  username            String    @unique
+  password            String
+  name                String
+  description         String?
+  google_rating       Float?
   google_rating_photo String?
-  phone      String
-  email      String?
-  photo      String?
-  trips      Trip[]
-  services   Service[]
-  created_at DateTime  @default(now())
+  phone               String
+  email               String?
+  photo               String?
+  trips               Trip[]
+  services            Service[]
+  created_at          DateTime  @default(now())
 }

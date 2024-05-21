@@ -57,6 +57,7 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
             },
             comment: true
             },
+            orderBy: { created_at: 'desc' },
         })
         for (let i = 0; i < fetchPosts.length; i++) {
             const isLiked = await prisma.likes.findFirst({

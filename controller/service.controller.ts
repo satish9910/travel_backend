@@ -40,7 +40,7 @@ export const CreateService = async (req: ExtendedRequest, res: Response, next: N
             services: body.services,
             duration: Number(body.duration),
             itinerary: body.itinerary,
-            type: body.type,
+            type: Number(body.type),
             start_date: body.start_date,
             end_date: body.end_date,
             pickups: body.pickups,
@@ -94,7 +94,7 @@ export const getFilteredServices = async (req: ExtendedRequest, res: Response, n
 const GetDefaultServices = async (req: ExtendedRequest, res: Response, next: NextFunction, destination: string, skip: number, limit: number) => {
     const services = await prisma.service.findMany({
         where: { 
-            type: '0',
+            type: 0,
             destination: { equals: destination } 
         },
         skip: skip,
@@ -106,7 +106,7 @@ const GetDefaultServices = async (req: ExtendedRequest, res: Response, next: Nex
 const getGroupServices = async (req: ExtendedRequest, res: Response, next: NextFunction, destination: string, start_date: string, seats: number, skip: number, limit: number) => {
     const services = await prisma.service.findMany({
         where: { 
-            type: '1',
+            type: 1,
             destination: { equals: destination},
             start_date: { gt: start_date },
             available_seats: { gte: seats },

@@ -40,6 +40,12 @@ export const CreateService = async (req: ExtendedRequest, res: Response, next: N
             services: body.services,
             duration: Number(body.duration),
             itinerary: body.itinerary,
+            type: body.type,
+            start_date: body.start_date,
+            end_date: body.end_date,
+            pickups: body.pickups,
+            total_seats: Number(body.total_seats),
+            available_seats: Number(body.available_seats),
         },
     })
     return res.status(200).send({ status: 201, message: 'Created', service: service })

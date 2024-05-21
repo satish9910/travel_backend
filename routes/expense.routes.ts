@@ -7,7 +7,7 @@ ExpenseRouter
     //@ts-ignore
     .get('/:id', expenseController.GetTripExpenses)
     //@ts-ignore
-    .get('/', expenseController.GetAllExpenses)
+    .get('/all/trips', expenseController.getEachTripsExpenses)
     // @ts-ignore
     .post('/', expenseController.CreateExpense)
     

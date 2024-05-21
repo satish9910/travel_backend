@@ -46,16 +46,16 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
         })
         const userIds = userIdsObjArr.map((user_id) => user_id.user_id)
         const fetchPosts = await prisma.post.findMany({
-            where: { user_id: { in: userIds } },
+            where: { user_id: { in: [...userIds, req.user.id] } },
             include: {
-                user: {
-                    select: {
-                        id: true,
-                        username: true,
-                        image: true,
-                    },
+            user: {
+                select: {
+                id: true,
+                username: true,
+                image: true,
                 },
-                comment: true
+            },
+            comment: true
             },
         })
         for (let i = 0; i < fetchPosts.length; i++) {
@@ -117,16 +117,21 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
 }
 const Get_follower = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
-    let followerCount = 0
     try {
-        followerCount = await prisma.follows.count({ where: { user_id: user.id } })
-    } catch (err) {
-        return next(err)
-    }
-    try {
-        const followers = await prisma.follows.findMany({ where: { user_id: user.id } })
-        
-        return res.status(200).send({ status: 200, message: 'Ok', followers: followers, count: followerCount })
+        const followers = await prisma.follows.findMany({
+            where: { user_id: user.id },
+            select: {
+                follower: {
+                    select: {
+                        id: true,
+                        username: true,
+                        image: true,
+                        is_verified: true,
+                    },
+                },
+            },
+        })
+        return res.status(200).send({ status: 200, message: 'Ok', followers: followers, count: followers.length})
     } catch (err) {
         return next(err)
     }
@@ -177,7 +182,7 @@ const getSuggestion = async (req: ExtendedRequest, res: Response, next: NextFunc
             include: {
                 _count: {
                     select: {
-                        Follows_by: true,
+                        follows: true,
                     },
                 },
             },

@@ -1,27 +1,26 @@
 import { Router } from 'express'
 import serviceController from '../controller/service.controller'
 import { upload } from '..'
+import middleware from '../utils/middleware'
 const ServiceRouter = Router()
 
 //@ts-ignore
 ServiceRouter
     //@ts-ignore
-    .post('/', serviceController.CreateService)
+    .post('/', middleware.HostAuthMiddleware, serviceController.CreateService)
     //@ts-ignore
-    .get('/all', serviceController.GetAllServices)
+    .get('/all', middleware.AuthMiddleware, serviceController.GetAllServices)
     //@ts-ignore
     .get('/', serviceController.GetServicesByDestination)
     //@ts-ignore
-    .get('/:id', serviceController.getSpecificService)
+    .get('/:id',middleware.HostAuthMiddleware, serviceController.getSpecificService)
     //@ts-ignore
-    .put('/:id', serviceController.editServiceById)
+    .put('/:id', middleware.HostAuthMiddleware, serviceController.editServiceById)
     //@ts-ignore
-    .get('/host/:id', serviceController.getServicesByHostId)
+    .get('/host/:id', middleware.HostAuthMiddleware, serviceController.getServicesByHostId)
     //@ts-ignore
-    .delete('/:id', serviceController.deleteService)
+    .delete('/:id', middleware.HostAuthMiddleware, serviceController.deleteService)
     //@ts-ignore
-    .put('/servicePics', upload.array("files", 5), serviceController.uploadServicePics)
-    
+    .put('/servicePics/:id', middleware.HostAuthMiddleware, upload.array('files', 10), serviceController.uploadServicePics)
+
 export default ServiceRouter
-
-

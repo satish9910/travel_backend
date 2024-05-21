@@ -23,12 +23,19 @@ export const CreateService = async (req: ExtendedRequest, res: Response, next: N
             error_description: 'name, description, destination, price, host id, duration, itinerary is required.',
         })
     }
+    if (isNaN(Number(body.price)) || isNaN(Number(body.host_id)) || isNaN(Number(body.duration))) {
+        return res.status(200).send({
+            status: 400,
+            error: 'Invalid payload',
+            error_description: 'price, host id, duration should be a number.',
+        })
+    }
     const service = await prisma.service.create({
         data: {
             name: body.name,
             description: body.description,
             price: Number(body.price),
-            host_id: body.host_id,
+            host_id: Number(body.host_id),
             destination: body.destination,
             services: body.services,
             duration: Number(body.duration),
@@ -137,8 +144,7 @@ export const deleteService = async (req: ExtendedRequest, res: Response, next: N
 
     await prisma.trip.updateMany({
         where: { service_id: serviceId },
-        //@ts-ignore
-        data: { service_id: null }, // or set it to a different service ID
+        data: { service_id: null }, 
     })
     const service = await prisma.service.delete({ where: { id: serviceId } })
     return res.status(200).send({ status: 200, message: 'Deleted', service })
@@ -186,8 +192,9 @@ const editServiceById = async (req: ExtendedRequest, res: Response, next: NextFu
 
 const uploadServicePics = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
+        let serviceId: string | number = req.params.id
         const files = req.files
-        const serviceId = req.body.service_id
+        
         if (!serviceId) {
             return res
                 .status(200)
@@ -203,7 +210,8 @@ const uploadServicePics = async (req: ExtendedRequest, res: Response, next: Next
                 .status(200)
                 .send({ status: 400, error: 'Invalid payload', error_description: 'Maximum 5 files are allowed.' })
         }
-        const images = files.map((file: any) => helper.imageUrlGen(file))
+        const images = files.map((file: any) => helper.imageUrlGen(file.filename))
+        
         const service = await prisma.service.update({
             where: { id: Number(serviceId) },
             data: {

@@ -71,7 +71,16 @@ export const GetSpecificTrip = async (req: ExtendedRequest, res: Response, next:
             .send({ status: 400, error: 'Invalid payload', error_description: 'id(trip) should be a number.' })
     }
 
-    const trip = await prisma.trip.findFirst({ where: { id: tripId, user_id: user.id }, include: {service: true}},)
+    const trip = await prisma.trip.findFirst({ where: { id: tripId, user_id: user.id }, include: {
+        service: true,
+        host: {
+            select: {
+                name: true,
+                username: true,
+                photo: true,
+            },
+        },
+    }})
     if (!trip) {
         return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Trip not found.' })
     }

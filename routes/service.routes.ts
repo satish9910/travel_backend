@@ -9,11 +9,11 @@ ServiceRouter
     //@ts-ignore
     .post('/', middleware.HostAuthMiddleware, serviceController.CreateService)
     //@ts-ignore
-    .get('/all', middleware.AuthMiddleware, serviceController.GetAllServices)
+    .get('/all', middleware.HostAuthMiddleware, serviceController.GetAllServices)
     //@ts-ignore
-    .get('/', serviceController.GetServicesByDestination)
+    .get('/filter', middleware.AuthMiddleware, serviceController.getFilteredServices)
     //@ts-ignore
-    .get('/:id',middleware.HostAuthMiddleware, serviceController.getSpecificService)
+    .get('/:id', serviceController.getSpecificService)
     //@ts-ignore
     .put('/:id', middleware.HostAuthMiddleware, serviceController.editServiceById)
     //@ts-ignore

@@ -28,18 +28,6 @@ export const CreateExpense = async (req: ExtendedRequest, res: Response, next: N
     return res.status(200).send({ status: 201, message: 'Created', expense: expense })
 }
 
-export const GetAllExpenses = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-    const user = req.user
-    const expenses = await prisma.expense.findMany({
-        where: { user_id: user.id },
-    })
-    let total = 0
-    expenses.forEach((expense) => {
-        total += expense.amount
-    })
-    return res.status(200).send({ status: 200, expenses: expenses, total: total })
-}
-
 export const GetTripExpenses = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     let tripId: string | number = req.params.id
     const user = req.user
@@ -61,9 +49,42 @@ export const GetTripExpenses = async (req: ExtendedRequest, res: Response, next:
     expenses.forEach((expense) => {
         total += expense.amount
     })
+    
     return res.status(200).send({ status: 200, expenses: expenses, total: total })
 }
 
-const expenseController = {CreateExpense, GetTripExpenses, GetAllExpenses}
+export const getEachTripsExpenses = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const trips = await prisma.trip.findMany({
+        where: { user_id: user.id },
+        include: {
+            service: {
+                select: {
+                    name: true,
+                    images: true
+                }
+            }
+        }
+    })
+    let tripExpenses = []
+    for (let i = 0; i < trips.length; i++) {
+        const expenses = await prisma.expense.findMany({
+            where: { user_id: user.id, trip_id: trips[i].id },
+        })
+        let total = 0
+        expenses.forEach((expense) => {
+            total += expense.amount
+        })
+        tripExpenses.push({ trip: trips[i], total: total })
+    }
+    let grandTotal = 0;
+    tripExpenses.forEach((tripExpense) => {
+        grandTotal += tripExpense.total;
+    });
+    return res.status(200).send({ status: 200, tripExpenses: tripExpenses, grandTotal: grandTotal });
+
+}
+
+const expenseController = {CreateExpense, GetTripExpenses, getEachTripsExpenses}
 
 export default expenseController

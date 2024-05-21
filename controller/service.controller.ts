@@ -71,27 +71,50 @@ export const GetAllServices = async (req: ExtendedRequest, res: Response, next: 
     }
 }
 
-export const GetServicesByDestination = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+export const getFilteredServices = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    let filteredServices = []
     const query = req.query
-    const { page = 1, limit = 10, destination } = query
-    if (isNaN(Number(page)) || isNaN(Number(limit))) {
+    const { page = 1, limit = 10, destination, start_date, seats } = query
+    if (isNaN(Number(page)) || isNaN(Number(limit)) || isNaN(Number(seats)) || typeof destination !== 'string' || typeof start_date !== 'string') {
         return res
             .status(200)
             .send({ status: 400, error: 'Bad Request', error_description: 'Invalid Query Parameters' })
     }
     const skip = (Number(page) - 1) * Number(limit)
     try {
-        const services = await prisma.service.findMany({
-            skip: skip,
-            take: Number(limit),
-            where: {
-                destination: { equals: destination as string },
-            },
-        })
-        return res.status(200).send({ status: 200, message: 'Ok', services: services })
+        const defaultServices = await GetDefaultServices(req, res, next, destination, skip, Number(limit));
+        const groupServices = await getGroupServices(req, res, next, destination, start_date, Number(seats), skip, Number(limit));
+        filteredServices = [...defaultServices, ...groupServices];
+        return res.status(200).send({ status: 200, message: 'Ok', services: filteredServices, count: filteredServices.length })
     } catch (err) {
         return next(err)
     }
+}
+
+const GetDefaultServices = async (req: ExtendedRequest, res: Response, next: NextFunction, destination: string, skip: number, limit: number) => {
+    const services = await prisma.service.findMany({
+        where: { 
+            type: '0',
+            destination: { equals: destination } 
+        },
+        skip: skip,
+        take: limit,
+    })
+    return services;
+}
+
+const getGroupServices = async (req: ExtendedRequest, res: Response, next: NextFunction, destination: string, start_date: string, seats: number, skip: number, limit: number) => {
+    const services = await prisma.service.findMany({
+        where: { 
+            type: '1',
+            destination: { equals: destination},
+            start_date: { gt: start_date },
+            available_seats: { gte: seats },
+        },
+        skip: skip,
+        take: limit,
+    })
+    return services;
 }
 
 export const getServicesByHostId = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
@@ -127,7 +150,20 @@ export const getSpecificService = async (req: ExtendedRequest, res: Response, ne
             .send({ status: 400, error: 'Invalid payload', error_description: 'id(service) should be a number.' })
     }
 
-    const service = await prisma.service.findFirst({ where: { id: serviceId } })
+    const service = await prisma.service.findFirst({ 
+        where: { id: serviceId },
+        include: {
+            host: {
+                select: {
+                    name: true,
+                    email: true,
+                    description: true,
+                    google_rating: true,
+                    photo: true
+                }
+            }
+        }
+    })
     if (!service) {
         return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Service not found.' })
     }
@@ -233,11 +269,11 @@ const uploadServicePics = async (req: ExtendedRequest, res: Response, next: Next
 const serviceController = {
     CreateService,
     GetAllServices,
-    GetServicesByDestination,
     getSpecificService,
     deleteService,
     getServicesByHostId,
     editServiceById,
     uploadServicePics,
+    getFilteredServices
 }
 export default serviceController

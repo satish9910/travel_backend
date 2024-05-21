@@ -7,6 +7,8 @@ DestinationRouter
     //@ts-ignore
     .post('/', destinationController.createDestination)
     //@ts-ignore
+    .get('/:id', destinationController.getSpecificDestination)
+    //@ts-ignore
     .get('/', destinationController.getDestinations)
     //@ts-ignore
     .delete('/:id', destinationController.deleteDestination)

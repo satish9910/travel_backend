@@ -122,7 +122,7 @@ model Service {
   host_id         Int
   host            Host    @relation(fields: [host_id], references: [id])
   //group
-  type            String     @default("default")
+  type            Int     @default(0) //0 default, 1 group, 2 custom
   start_date      String?
   end_date        String?
   pickups         Json?

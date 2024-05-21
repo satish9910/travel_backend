@@ -58,5 +58,29 @@ export const deleteDestination = async (req: ExtendedRequest, res: Response, nex
     return res.status(200).send({ status: 200, message: 'Deleted', destination: destination })
 }
 
-const destinationController = { createDestination, getDestinations, deleteDestination }
+export const getSpecificDestination = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    let destinationId: string | number = req.params.id
+    if (!destinationId) {
+        return res.status(200).send({
+            status: 400,
+            error: 'Invalid payload',
+            error_description: 'id(destination) is required in params.',
+        })
+    }
+    destinationId = Number(destinationId)
+    if (Number.isNaN(destinationId)) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'id(destination) should be a number.' })
+    }
+    const destination = await prisma.destination.findUnique({
+        where: {
+            id: destinationId,
+        },
+    })
+    return res.status(200).send({ status: 200, message: 'Ok', destination: destination })
+
+}
+
+const destinationController = { createDestination, getDestinations, deleteDestination, getSpecificDestination }
 export default destinationController

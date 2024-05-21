@@ -52,7 +52,7 @@ app.use('/action', middleware.AuthMiddleware, actionRouter)
 // @ts-ignore
 app.use('/trip', middleware.AuthMiddleware, tripRouter)
 // @ts-ignore
-app.use('/service',middleware.HostAuthMiddleware, ServiceRouter)
+app.use('/service', ServiceRouter)
 // @ts-ignore
 app.use('/host',middleware.HostAuthMiddleware, HostRouter)
 // @ts-ignore

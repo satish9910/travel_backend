@@ -14,6 +14,8 @@ userRouter
     //@ts-ignore
     .get('/feed', userController.get_user_feed)
     //@ts-ignore
+    .get('/feed/:place', userController.feedByPlace)
+    //@ts-ignore
     .get('/', userController.get_user_details)
     //@ts-ignore
     .put('/', upload.single('profile_pic'), userController.update_user)

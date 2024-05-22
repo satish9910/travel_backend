@@ -33,6 +33,15 @@ export const CreateTrip = async (req: ExtendedRequest, res: Response, next: Next
             host_id: service.host_id,
         },
     })
+    if (service.type === 1) {
+        if (service.available_seats !== null && service.available_seats < body.number_of_people) {
+            return res.status(200).send({ status: 400, error: 'Not enough seats', error_description: 'Service does not have enough seats.' })
+        }
+        await prisma.service.update({
+            where: { id: body.service_id },
+            data: { available_seats: service.available_seats !== null ? service.available_seats - body.number_of_people : null },
+        })
+    }
     return res.status(200).send({ status: 201, message: 'Created', trip: trip })
 }
 

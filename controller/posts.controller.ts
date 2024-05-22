@@ -19,7 +19,8 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
             user_id: user.id,
             media_type: body.media_type,
             latitude: body.latitude,
-            longitude: body.longitude
+            longitude: body.longitude,
+            place: body.place,
         },
     })
     return res.status(200).send({ status: 201, message: 'Created', post: post })

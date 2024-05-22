@@ -232,6 +232,42 @@ const userTravelingStatus = async (req: ExtendedRequest, res: Response, next: Ne
     }
 }
 
+const feedByPlace = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const place = req.params.place
+    const user = req.user
+    if (!place) {
+        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Place is required' })
+    }
+    if(typeof place !== 'string') {
+        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Place should be a string' })
+    }
+    try {
+        const posts = await prisma.post.findMany({
+            where: { place: place },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        image: true,
+                    },
+                },
+            },
+            orderBy: { created_at: 'desc' },
+        })
+        for (let i = 0; i < posts.length; i++) {
+            const isLiked = await prisma.likes.findFirst({
+                where: { post_id: posts[i].id, user_id: user.id },
+            })
+            //@ts-ignore
+            posts[i].isLiked = isLiked ? true : false
+        }
+        return res.status(200).send({ status: 200, message: 'Ok', posts: posts })
+    } catch (err) {
+        return next(err)
+    }
+}
+
 const userController = {
     getSuggestion,
     get_all_users,
@@ -241,6 +277,7 @@ const userController = {
     Get_follower,
     GET_following,
     userTravelingStatus,
+    feedByPlace
 }
 
 export default userController

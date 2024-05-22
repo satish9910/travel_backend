@@ -2,6 +2,7 @@ import type { Response, NextFunction } from 'express'
 import { ExtendedRequest } from '../utils/middleware'
 import helper from '../utils/helpers'
 import { PrismaClient } from '@prisma/client'
+import { addMonths, parseISO } from 'date-fns';
 const prisma = new PrismaClient()
 
 export const CreateService = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
@@ -104,11 +105,16 @@ const GetDefaultServices = async (req: ExtendedRequest, res: Response, next: Nex
 }
 
 const getGroupServices = async (req: ExtendedRequest, res: Response, next: NextFunction, destination: string, start_date: string, seats: number, skip: number, limit: number) => {
+    const startDate = parseISO(start_date).toISOString();
+    const endDate = addMonths(parseISO(start_date), 1).toISOString();
+
     const services = await prisma.service.findMany({
         where: { 
             type: 1,
             destination: { equals: destination},
-            start_date: { gt: start_date },
+            start_date: { 
+                in: [startDate, endDate]
+            },
             available_seats: { gte: seats },
         },
         skip: skip,

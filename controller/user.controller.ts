@@ -80,7 +80,7 @@ const get_user_details = (req: ExtendedRequest, res: Response, _next: NextFuncti
 
 const update_user = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
-    let { username, gender, date_of_birth, bio, emergency_name, emergency_phone } = req.body
+    let { username, gender, date_of_birth, bio, emergency_name, emergency_phone, typeOfTraveller } = req.body
     if (gender) {
         gender = Number(gender)
         if (Number.isNaN(gender)) {
@@ -91,11 +91,13 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
             })
         }
     }
-    if (!helper.isValidDateFormat(date_of_birth)) {
-        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Invalid Date Format' })
+    
+    if(typeOfTraveller){
+        typeOfTraveller = Number(typeOfTraveller)
+        if(Number.isNaN(typeOfTraveller)){
+            return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Invalid type of traveller' })
+        }
     }
-
-    date_of_birth = new Date(date_of_birth)
 
     let imagePath: string | undefined
     if (req.file) {
@@ -106,7 +108,7 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
     try {
         const updatedUser = await prisma.user.update({
             where: { id: user.id },
-            data: { username, gender, date_of_birth, bio, image: imageUrl, emergency_name, emergency_phone },
+            data: { username, gender, date_of_birth, bio, image: imageUrl, emergency_name, emergency_phone, typeOfTraveller },
         })
         delete (updatedUser as any).password
         delete (updatedUser as any).emergency_name
@@ -268,6 +270,43 @@ const feedByPlace = async (req: ExtendedRequest, res: Response, next: NextFuncti
     }
 }
 
+const getUsersByUsername = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const username = req.params.username
+    const currentUserId = req.user.id
+
+    if (!username) {
+        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Username is required' })
+    }
+    if(typeof username !== 'string') {
+        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Username should be a string' })
+    }
+    try {
+        let users = await prisma.user.findMany({
+            where: { username: { contains: username } },
+            select: {
+                id: true,
+                username: true,
+                image: true,
+                followers: true, 
+            },
+        })
+
+        users = users.filter(user => user.id !== currentUserId)
+
+        const usersWithFollowingInfo = users.map(user => ({
+            id: user.id,
+            username: user.username,
+            image: user.image,
+            followersCount: user.followers.length,
+            isFollowing: user.followers?.some(follow => follow.follower_id === currentUserId) || false, 
+        }))
+
+        return res.status(200).send({ status: 200, message: 'Ok', users: usersWithFollowingInfo })
+    } catch (err) {
+        return next(err)
+    }
+}
+
 const userController = {
     getSuggestion,
     get_all_users,
@@ -277,7 +316,8 @@ const userController = {
     Get_follower,
     GET_following,
     userTravelingStatus,
-    feedByPlace
+    feedByPlace,
+    getUsersByUsername
 }
 
 export default userController

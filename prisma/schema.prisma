@@ -21,7 +21,7 @@ model User {
   email            String?   @unique
   image            String?
   gender           Int? // 0 = female, 1 = male
-  date_of_birth    DateTime?
+  date_of_birth    String?
   bio              String?
   emergency_name   String?
   emergency_phone  String?
@@ -36,6 +36,7 @@ model User {
   userReferralCode String?
   referredByCode   String?
   status           Boolean   @default(false)
+  typeOfTraveller  Int?      @default(1) // 0 = solo, 1 = group
 
   post      Post[]
   Comment   Comment[]

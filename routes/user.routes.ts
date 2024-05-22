@@ -10,6 +10,8 @@ userRouter
     //@ts-ignore
     .get("/suggest", userController.getSuggestion)
     //@ts-ignore
+    .get("/search/:username", userController.getUsersByUsername)
+    //@ts-ignore
     .put("/status", userController.userTravelingStatus)
     //@ts-ignore
     .get('/feed', userController.get_user_feed)

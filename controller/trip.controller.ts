@@ -2,6 +2,7 @@ import type { Response, NextFunction } from 'express'
 import { ExtendedRequest } from '../utils/middleware'
 import helper from '../utils/helpers'
 import { PrismaClient } from '@prisma/client'
+import { isValid, parseISO } from 'date-fns'
 const prisma = new PrismaClient()
     
 export const CreateTrip = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
@@ -16,10 +17,15 @@ export const CreateTrip = async (req: ExtendedRequest, res: Response, next: Next
             .status(200)
             .send({ status: 200, error: 'Invalid payload', error_description: 'destination, start_date, end_date is required.' })
     }
-    if(!helper.isValidDateFormat(body.start_date) || !helper.isValidDateFormat(body.end_date)){
-        return res
-            .status(200)
-            .send({ status: 200, error: 'Invalid payload', error_description: 'start_date and end_date should be in YYYY-MM-DD format.' })
+    const startDate = parseISO(body.start_date)
+    const endDate = parseISO(body.end_date)
+
+    if (!isValid(startDate) || !isValid(endDate)) {
+        return res.status(200).send({ status: 400, error: 'Invalid date', error_description: 'Invalid start_date or end_date format.' })
+    }
+
+    if (startDate > endDate) {
+        return res.status(200).send({ status: 400, error: 'Invalid date range', error_description: 'start_date must be before end_date.' })
     }
     const trip = await prisma.trip.create({
         data: {

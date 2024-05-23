@@ -245,15 +245,16 @@ const feedByPlace = async (req: ExtendedRequest, res: Response, next: NextFuncti
     }
     try {
         const posts = await prisma.post.findMany({
-            where: { place: place },
+            where: { place: { contains: place } },
             include: {
-                user: {
-                    select: {
-                        id: true,
-                        username: true,
-                        image: true,
-                    },
+            user: {
+                select: {
+                id: true,
+                username: true,
+                image: true,
                 },
+            },
+            comment: true
             },
             orderBy: { created_at: 'desc' },
         })

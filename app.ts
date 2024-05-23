@@ -15,6 +15,7 @@ const app = express()
 import morgan from "morgan";
 import DestinationRouter from './routes/destination.routes'
 import HostRouter from './routes/host.routes'
+import customtriprouter from './routes/customtrips.routes'
 app.use(express.static('public'))
 app.use(express.json())
 // app.use(express.urlencoded({ extended: true }));
@@ -59,6 +60,8 @@ app.use('/host',middleware.HostAuthMiddleware, HostRouter)
 app.use('/destination', DestinationRouter)
 // @ts-ignore
 app.use('/expense', middleware.AuthMiddleware, ExpenseRouter)
+//@ts-ignore
+app.use('/custom', customtriprouter)
 
 app.use(middleware.ErrorHandler)
 app.all('*', (_req, res) => {

@@ -11,7 +11,7 @@ ServiceRouter
     //@ts-ignore
     .get('/all', middleware.HostAuthMiddleware, serviceController.GetAllServices)
     //@ts-ignore
-    .get('/filter', middleware.AuthMiddleware, serviceController.getFilteredServices)
+    .get('/filter', serviceController.getFilteredServices)
     //@ts-ignore
     .get('/:id', serviceController.getSpecificService)
     //@ts-ignore

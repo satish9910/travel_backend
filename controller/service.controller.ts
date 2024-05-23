@@ -105,7 +105,7 @@ const GetDefaultServices = async (req: ExtendedRequest, res: Response, next: Nex
 }
 
 const getGroupServices = async (req: ExtendedRequest, res: Response, next: NextFunction, destination: string, start_date: string, seats: number, skip: number, limit: number) => {
-    const startDate = parseISO(start_date).toISOString();
+    const startDate = parseISO(start_date.replace(/\/\//g, '-')).toISOString()
     const endDate = addMonths(parseISO(start_date), 1).toISOString();
 
     const services = await prisma.service.findMany({
@@ -113,7 +113,8 @@ const getGroupServices = async (req: ExtendedRequest, res: Response, next: NextF
             type: 1,
             destination: { equals: destination},
             start_date: { 
-                in: [startDate, endDate]
+                gte: startDate,
+                lt: endDate
             },
             available_seats: { gte: seats },
         },

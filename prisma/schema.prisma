@@ -38,10 +38,11 @@ model User {
   status           Boolean   @default(false)
   typeOfTraveller  Int?      @default(1) // 0 = solo, 1 = group
 
-  post      Post[]
-  Comment   Comment[]
-  follows   Follows[] @relation(name: "FollowerUser")
-  followers Follows[] @relation(name: "UserFollows")
+  post        Post[]
+  Comment     Comment[]
+  follows     Follows[]    @relation(name: "FollowerUser")
+  followers   Follows[]    @relation(name: "UserFollows")
+  customTrips CustomTrip[]
 }
 
 model Otp {
@@ -110,26 +111,30 @@ model Follows {
 }
 
 model Service {
-  id              Int     @id @default(autoincrement())
+  id              Int          @id @default(autoincrement())
   name            String
   description     String
-  destination     String
+  destination     String?
   duration        Int
-  services        Json
-  itinerary       Json
+  services        Json?
+  itinerary       Json?
   images          Json?
-  rating          Float   @default(0)
+  rating          Float        @default(0)
   price           Int
   trip            Trip[]
   host_id         Int
-  host            Host    @relation(fields: [host_id], references: [id])
+  host            Host         @relation(fields: [host_id], references: [id])
   //group
-  type            Int     @default(0) //0 default, 1 group, 2 custom
+  type            Int          @default(0) //0 default, 1 group, 2 custom
   start_date      String?
   end_date        String?
   pickups         Json?
   total_seats     Int?
   available_seats Int?
+  //custom
+  customTrips     CustomTrip[]
+  bids            Bid[]
+  number_of_people Int?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -155,18 +160,55 @@ model Trip {
   updated_at DateTime @updatedAt
 }
 
-model Expense {
-  id       Int     @id @default(autoincrement())
-  user_id  Int
-  amount   Int
-  category String
-  note     String?
-  trip_id  Int
+model CustomTrip {
+  id               Int       @id @default(autoincrement())
+  user_id          Int
+  number_of_people Int
+  start_date       String
+  end_date         String
+  duration         Int
+  itinerary        Json
+  service_id       Int?
+  cost             Int?
+  host_id          Int?
+  booked           Boolean   @default(false)
+  isBookmarked     Boolean   @default(false)
+  expense          Expense[]
+  host             Host?     @relation(fields: [host_id], references: [id])
 
+  service    Service? @relation(fields: [service_id], references: [id], onDelete: SetNull)
   user       User     @relation(fields: [user_id], references: [id])
-  trip       Trip     @relation(fields: [trip_id], references: [id])
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+}
+
+
+model Bid {
+  id         Int      @id @default(autoincrement())
+  host_id    Int
+  amount     Int
+  status     Int      @default(0) // 0 = pending, 1 = accepted, 2 = rejected
+  service_id Int
+  service    Service  @relation(fields: [service_id], references: [id], onDelete: Cascade)
+  host       Host     @relation(fields: [host_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Expense {
+  id           Int     @id @default(autoincrement())
+  user_id      Int
+  amount       Int
+  category     String
+  note         String?
+  trip_id      Int
+  customTripId Int?
+
+  user       User        @relation(fields: [user_id], references: [id])
+  trip       Trip        @relation(fields: [trip_id], references: [id])
+  customTrip CustomTrip? @relation(fields: [customTripId], references: [id])
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
 }
 
 model Destination {
@@ -182,9 +224,9 @@ model Destination {
 }
 
 model Host {
-  id                  Int       @id @default(autoincrement())
-  type                String    @default("host")
-  username            String    @unique
+  id                  Int          @id @default(autoincrement())
+  type                String       @default("host")
+  username            String       @unique
   password            String
   name                String
   description         String?
@@ -195,5 +237,7 @@ model Host {
   photo               String?
   trips               Trip[]
   services            Service[]
-  created_at          DateTime  @default(now())
+  customTrips         CustomTrip[]
+  bids                Bid[]
+  created_at          DateTime     @default(now())
 }

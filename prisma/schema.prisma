@@ -111,30 +111,33 @@ model Follows {
 }
 
 model Service {
-  id              Int          @id @default(autoincrement())
-  name            String
-  description     String
-  destination     String?
-  duration        Int
-  services        Json?
-  itinerary       Json?
-  images          Json?
-  rating          Float        @default(0)
-  price           Int
-  trip            Trip[]
-  host_id         Int
-  host            Host         @relation(fields: [host_id], references: [id])
+  id               Int          @id @default(autoincrement())
+  name             String
+  description      String
+  destination      String?
+  duration         Int
+  services         Json?
+  itinerary        Json?
+  images           Json?
+  rating           Float        @default(0)
+  price            Int
+  trip             Trip[]
+  host_id          Int
+  host             Host         @relation(fields: [host_id], references: [id])
+  isBookmarked     Boolean      @default(false)
   //group
-  type            Int          @default(0) //0 default, 1 group, 2 custom
-  start_date      String?
-  end_date        String?
-  pickups         Json?
-  total_seats     Int?
-  available_seats Int?
+  type             Int          @default(0) //0 default, 1 group, 2 custom
+  start_date       String?
+  end_date         String?
+  pickups          Json?
+  total_seats      Int?
+  available_seats  Int?
   //custom
-  customTrips     CustomTrip[]
-  bids            Bid[]
+  customTrips      CustomTrip[]
   number_of_people Int?
+  custom_trip_id   Int?
+  user_id          Int?
+  status           Int          @default(0) // 0 = pending, 1 = accepted, 2 = rejected
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -150,6 +153,8 @@ model Trip {
   service_id       Int?
   cost             Int
   host_id          Int
+  cancelled        Boolean   @default(false)
+  status           String    @default("upcoming")
   isBookmarked     Boolean   @default(false)
   expense          Expense[]
   host             Host      @relation(fields: [host_id], references: [id])
@@ -171,6 +176,8 @@ model CustomTrip {
   service_id       Int?
   cost             Int?
   host_id          Int?
+  cancelled        Boolean   @default(false)
+  status           String    @default("upcoming")
   booked           Boolean   @default(false)
   isBookmarked     Boolean   @default(false)
   expense          Expense[]
@@ -178,19 +185,6 @@ model CustomTrip {
 
   service    Service? @relation(fields: [service_id], references: [id], onDelete: SetNull)
   user       User     @relation(fields: [user_id], references: [id])
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-}
-
-
-model Bid {
-  id         Int      @id @default(autoincrement())
-  host_id    Int
-  amount     Int
-  status     Int      @default(0) // 0 = pending, 1 = accepted, 2 = rejected
-  service_id Int
-  service    Service  @relation(fields: [service_id], references: [id], onDelete: Cascade)
-  host       Host     @relation(fields: [host_id], references: [id])
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }
@@ -238,6 +232,5 @@ model Host {
   trips               Trip[]
   services            Service[]
   customTrips         CustomTrip[]
-  bids                Bid[]
   created_at          DateTime     @default(now())
 }

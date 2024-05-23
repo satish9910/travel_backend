@@ -13,5 +13,9 @@ customRouter.delete('/:id', middleware.AuthMiddleware, customTripController.dele
 //@ts-ignore
 customRouter.get('/:id', middleware.HostAuthMiddleware, customTripController.getCustomTripById) 
 //@ts-ignore
-// customRouter.post('/service', middleware.AuthMiddleware, customTripController.createCustomService)  //host
+customRouter.post('/service', middleware.HostAuthMiddleware, customTripController.createCustomService)  
+//@ts-ignore
+customRouter.get('/bids/:id', middleware.AuthMiddleware, customTripController.getBids)
+//@ts-ignore
+customRouter.post('/bid/accept', middleware.AuthMiddleware, customTripController.acceptBid)
 export default customRouter

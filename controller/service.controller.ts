@@ -98,6 +98,14 @@ const GetDefaultServices = async (req: ExtendedRequest, res: Response, next: Nex
             type: 0,
             destination: { equals: destination } 
         },
+        include: {
+            host: {
+                select:{
+                    name: true,
+                    photo: true
+                }
+            }
+        },
         skip: skip,
         take: limit,
     })
@@ -117,6 +125,14 @@ const getGroupServices = async (req: ExtendedRequest, res: Response, next: NextF
                 lt: endDate
             },
             available_seats: { gte: seats },
+        },
+        include:{
+            host: {
+                select:{
+                    name: true,
+                    photo: true
+                }
+            }
         },
         skip: skip,
         take: limit,

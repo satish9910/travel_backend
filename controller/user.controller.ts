@@ -254,7 +254,7 @@ const feedByPlace = async (req: ExtendedRequest, res: Response, next: NextFuncti
                 image: true,
                 },
             },
-            comment: true
+            comment: true,
             },
             orderBy: { created_at: 'desc' },
         })

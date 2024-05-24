@@ -67,7 +67,9 @@ export const deleteCustomTrip = async (req: ExtendedRequest, res: Response, next
 
 export const AllCustomTrips = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
-        const customTrips = await prisma.customTrip.findMany({ where: { booked: false } })
+        const customTrips = await prisma.customTrip.findMany({ where: { booked: false }, include:{user: {
+            select: { username: true, phone: true, image: true },
+        }} })
         return res.status(200).send({ status: 200, message: 'Ok', custom_trips: customTrips })
     } catch (err) {
         return next(err)
@@ -80,7 +82,9 @@ export const getCustomTripById = async (req: ExtendedRequest, res: Response, nex
         return res.status(400).send({ error: 'Invalid payload', error_description: 'custom trip id is required.' })
     }
     try {
-        const customTrip = await prisma.customTrip.findFirst({ where: { id: customTripId } })
+        const customTrip = await prisma.customTrip.findFirst({ where: { id: customTripId }, include:{user: {
+            select: { username: true, phone: true, image: true },
+        }}})
         if (!customTrip) {
             return res.status(404).send({ error: 'Not found', error_description: 'Custom trip not found.' })
         }

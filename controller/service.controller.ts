@@ -159,6 +159,25 @@ export const getServicesByHostId = async (req: ExtendedRequest, res: Response, n
         return next(err)
     }
 }
+export const getBidsByHostId = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const host_id = req.params.id
+    if (isNaN(Number(host_id))) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'Invalid Query Parameters' })
+    }
+    try {
+        const services = await prisma.service.findMany({
+            where: {
+                host_id: { equals: Number(host_id) },
+                type: { equals: 2 }
+            },
+        })
+        return res.status(200).send({ status: 200, message: 'Ok', bids: services, count: services.length })
+    } catch (err) {
+        return next(err)
+    }
+}
 
 export const getSpecificService = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     let serviceId: string | number = req.params.id
@@ -298,6 +317,7 @@ const serviceController = {
     getServicesByHostId,
     editServiceById,
     uploadServicePics,
-    getFilteredServices
+    getFilteredServices,
+    getBidsByHostId
 }
 export default serviceController

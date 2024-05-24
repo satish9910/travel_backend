@@ -19,6 +19,8 @@ ServiceRouter
     //@ts-ignore
     .get('/host/:id', middleware.HostAuthMiddleware, serviceController.getServicesByHostId)
     //@ts-ignore
+    .get('/host/bids/:id', middleware.HostAuthMiddleware, serviceController.getBidsByHostId)
+    //@ts-ignore
     .delete('/:id', middleware.HostAuthMiddleware, serviceController.deleteService)
     //@ts-ignore
     .put('/servicePics/:id', middleware.HostAuthMiddleware, upload.array('files', 10), serviceController.uploadServicePics)

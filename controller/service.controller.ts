@@ -63,6 +63,9 @@ export const GetAllServices = async (req: ExtendedRequest, res: Response, next: 
     const skip = (Number(page) - 1) * Number(limit)
     try {
         const services = await prisma.service.findMany({
+            where: {
+            type: { in: [0, 1] }
+            },
             skip: skip,
             take: Number(limit),
         })

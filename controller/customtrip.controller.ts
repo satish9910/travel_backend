@@ -146,7 +146,7 @@ export const createCustomService = async (req: ExtendedRequest, res: Response, n
                 number_of_people: number_of_people,
                 start_date: start_date,
                 end_date: end_date,
-                price: price,
+                price: Number(price),
                 type: type,
                 custom_trip_id: custom_trip_id,
                 user_id: user_id,

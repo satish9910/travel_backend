@@ -75,7 +75,7 @@ cron.schedule('0 0 * * *', async () => {
             const startDate = new Date(trip.start_date)
             const endDate = new Date(trip.end_date)
             const today = new Date()
-        
+
             if (trip.cancelled) {
                 await prisma.trip.update({
                     where: { id: trip.id },
@@ -86,7 +86,7 @@ cron.schedule('0 0 * * *', async () => {
                     where: { id: trip.id },
                     data: { status: 'completed' },
                 })
-            } else if(startDate < today && today < endDate) {
+            } else if (startDate < today && today < endDate) {
                 await prisma.trip.update({
                     where: { id: trip.id },
                     data: { status: 'ongoing' },

@@ -67,13 +67,14 @@ export const PaymentVerification = async (req: ExtendedRequest, res: Response, n
     if (!body) return res.status(200).send({ status: 400, error: "Invalid payload", error_description: "paymentId, orderId is required." })
 
     const { paymentId, orderId, tripId } = body;
-    if (!paymentId && !orderId && tripId && Number.isNaN(Number(tripId))) {
-        return res.status(200).send({ status: 400, error: "Invalid payload", error_description: "paymentId, orderId is required." });
+    if (!paymentId || !orderId || !tripId || Number.isNaN(Number(tripId))) {
+        return res.status(200).send({ status: 400, error: "Invalid payload", error_description: "paymentId, orderId ,tripId is required." });
     }
     const razorpay_signature = req.headers['x-razorpay-signature']
     if (!razorpay_signature) return res.status(200).send({ status: 400, message: "x-razorpay-signature" });
     let sha256 = crypto.createHmac('sha256', process.env.KEY_SECRET!);
     sha256.update(orderId + "|" + paymentId);
+
     const generated_signature = sha256.digest('hex');
     if (generated_signature === razorpay_signature) {
         const updatedTrip = await prisma.trip.update({
@@ -129,14 +130,14 @@ export const GetTrips = async (req: ExtendedRequest, res: Response, next: NextFu
         at.type = "build"
         return at;
     })
-    console.log(trp);
+
     const merged = [...trp, ...cstm];
 
     // console.log(merged.length)
     const finalTrips = merged.sort((a, b) => {
-        console.log(a, b);
+        // console.log(a, b);
         // @ts-ignore
-        return a.created_at.getTime() - b.created_at.getTime()
+        return (a?.created_at?.getTime() - b?.created_at?.getTime()) || -1;
     })
 
     return res.status(200).send({ status: 200, trips: finalTrips })

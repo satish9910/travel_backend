@@ -105,7 +105,41 @@ export const GetTrips = async (req: ExtendedRequest, res: Response, next: NextFu
             },
         },
     })
-    return res.status(200).send({ status: 200, trips: trips })
+    const customs = await prisma.customTrip.findMany({
+        where: {
+            user_id: user.id,
+        },
+        include: {
+            service: true,
+            host: {
+                select: {
+                    name: true,
+                    username: true,
+                    photo: true,
+                },
+            },
+        },
+    })
+    const cstm = customs.map((at) => {
+        //@ts-ignore
+        return at.type = "custom";
+    })
+    const trp = trips.map((at) => {
+        //@ts-ignore
+        at.type = "build"
+        return at;
+    })
+    console.log(trp);
+    const merged = [...trp, ...cstm];
+
+    // console.log(merged.length)
+    const finalTrips = merged.sort((a, b) => {
+        console.log(a, b);
+        // @ts-ignore
+        return a.created_at.getTime() - b.created_at.getTime()
+    })
+
+    return res.status(200).send({ status: 200, trips: finalTrips })
 }
 
 export const GetSpecificTrip = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
@@ -140,7 +174,6 @@ export const GetSpecificTrip = async (req: ExtendedRequest, res: Response, next:
     }
     return res.status(200).send({ status: 200, message: 'Ok', trip })
 }
-
 
 
 const tripController = { CreateTrip, GetTrips, GetSpecificTrip, PaymentVerification }

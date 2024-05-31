@@ -31,6 +31,7 @@ export const CreateService = async (req: ExtendedRequest, res: Response, next: N
             error_description: 'price, host id, duration should be a number.',
         })
     }
+
     const service = await prisma.service.create({
         data: {
             name: body.name,
@@ -49,6 +50,7 @@ export const CreateService = async (req: ExtendedRequest, res: Response, next: N
             available_seats: Number(body.available_seats),
         },
     })
+
     return res.status(200).send({ status: 201, message: 'Created', service: service })
 }
 
@@ -94,13 +96,13 @@ export const getFilteredServices = async (req: ExtendedRequest, res: Response, n
 
 const GetDefaultServices = async (req: ExtendedRequest, res: Response, next: NextFunction, destination: string, skip: number, limit: number) => {
     const services = await prisma.service.findMany({
-        where: { 
+        where: {
             type: 0,
-            destination: { equals: destination } 
+            destination: { equals: destination }
         },
         include: {
             host: {
-                select:{
+                select: {
                     name: true,
                     photo: true
                 }
@@ -117,18 +119,18 @@ const getGroupServices = async (req: ExtendedRequest, res: Response, next: NextF
     const endDate = addMonths(parseISO(start_date), 1).toISOString();
 
     const services = await prisma.service.findMany({
-        where: { 
+        where: {
             type: 1,
-            destination: { equals: destination},
-            start_date: { 
+            destination: { equals: destination },
+            start_date: {
                 gte: startDate,
                 lt: endDate
             },
             available_seats: { gte: seats },
         },
-        include:{
+        include: {
             host: {
-                select:{
+                select: {
                     name: true,
                     photo: true
                 }
@@ -193,7 +195,7 @@ export const getSpecificService = async (req: ExtendedRequest, res: Response, ne
             .send({ status: 400, error: 'Invalid payload', error_description: 'id(service) should be a number.' })
     }
 
-    const service = await prisma.service.findFirst({ 
+    const service = await prisma.service.findFirst({
         where: { id: serviceId },
         include: {
             host: {
@@ -229,7 +231,7 @@ export const deleteService = async (req: ExtendedRequest, res: Response, next: N
 
     await prisma.trip.updateMany({
         where: { service_id: serviceId },
-        data: { service_id: null }, 
+        data: { service_id: null },
     })
     const service = await prisma.service.delete({ where: { id: serviceId } })
     return res.status(200).send({ status: 200, message: 'Deleted', service })
@@ -279,7 +281,7 @@ const uploadServicePics = async (req: ExtendedRequest, res: Response, next: Next
     try {
         let serviceId: string | number = req.params.id
         const files = req.files
-        
+
         if (!serviceId) {
             return res
                 .status(200)
@@ -296,7 +298,7 @@ const uploadServicePics = async (req: ExtendedRequest, res: Response, next: Next
                 .send({ status: 400, error: 'Invalid payload', error_description: 'Maximum 5 files are allowed.' })
         }
         const images = files.map((file: any) => helper.imageUrlGen(file.filename))
-        
+
         const service = await prisma.service.update({
             where: { id: Number(serviceId) },
             data: {

@@ -9,9 +9,10 @@ TripRouter
     //@ts-ignore
     .get('/', tripController.GetTrips)
     //@ts-ignore
+    .post("/verify", tripController.PaymentVerification)
+    //@ts-ignore
     .get('/:id', tripController.GetSpecificTrip)
 
-    
 export default TripRouter
 
 

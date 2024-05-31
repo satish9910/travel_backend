@@ -26,26 +26,35 @@ const Login = async (req: Request, res: Response, next: NextFunction) => {
         DIGEST_ALGO
     )
     hash_password = hash_password.toString('hex')
-    const userDetails = await prisma.user.findUnique({
-        where: { username: body.username, password: hash_password },
-    })
-    if (!userDetails) {
+    try {
+
+        const userDetails = await prisma.user.findUnique({
+            where: { username: body.username, password: hash_password },
+        })
+        if (!userDetails) {
+            return res.status(200).send({
+                status: 200,
+                error: 'Invalid credentials.',
+                error_description: 'username or password is not valid',
+            })
+        }
+        delete (userDetails as any).password
+        const token = jwt.sign({ phone: userDetails.phone }, process.env.JWT_SECRET!, {
+            expiresIn: '7d',
+        })
+
+        return res.status(200).send({
+            status: 200,
+            message: 'Ok',
+            user: { ...userDetails, token },
+        })
+    } catch (err) {
         return res.status(200).send({
             status: 200,
             error: 'Invalid credentials.',
-            error_description: 'username or password is not valid',
+            error_description: (err as any).message
         })
     }
-    delete (userDetails as any).password
-    const token = jwt.sign({ phone: userDetails.phone }, process.env.JWT_SECRET!, {
-        expiresIn: '7d',
-    })
-
-    return res.status(200).send({
-        status: 200,
-        message: 'Ok',
-        user: { ...userDetails, token },
-    })
 }
 
 // TODO Incomplete
@@ -279,7 +288,7 @@ const socialSignUp = async (req: Request, res: Response, next: NextFunction, ema
         if (err) return next(err)
         else {
             prisma.user
-                .create({ data: { email, password: hash_password,  userReferralCode: referralCode } })
+                .create({ data: { email, password: hash_password, userReferralCode: referralCode } })
                 .then((r) => {
                     delete (r as any).password
                     return res.status(200).send({ status: 201, message: 'Created', user: r, token })

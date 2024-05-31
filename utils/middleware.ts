@@ -5,7 +5,7 @@ const prisma = new PrismaClient()
 
 export type ExtendedRequest = Request & {
     user: any,
-    host:any
+    host: any
 }
 
 const AuthMiddleware = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
@@ -34,7 +34,6 @@ const AuthMiddleware = async (req: ExtendedRequest, res: Response, next: NextFun
     } catch (err: any) {
         return next(err)
     }
-    // console.log(decryptedToken.username);
 
     const phone: string = decryptedToken?.phone
     const email: string = decryptedToken?.email
@@ -42,13 +41,17 @@ const AuthMiddleware = async (req: ExtendedRequest, res: Response, next: NextFun
         const err = new Error("Error: token doens't contain phone or email")
         return next(err)
     }
-    const user = await prisma.user.findFirst({ where: { OR: [{ phone: phone }, { email: email }] } })
-    if (!user) {
-        return res.status(200).send({ status: 400, error: 'user not found.', error_description: 'Account had closed.' })
+    try {
+        const user = await prisma.user.findFirst({ where: { OR: [{ phone: phone }, { email: email }] } })
+        if (!user) {
+            return res.status(200).send({ status: 400, error: 'user not found.', error_description: 'Account had closed.' })
+        }
+        delete (user as any)?.password
+        req.user = user
+        next()
+    } catch (err) {
+        return res.status(200).send({ status: 400, error: 'user not found.', error_description: (err as Error).message })
     }
-    delete (user as any)?.password
-    req.user = user
-    next()
 }
 
 const HostAuthMiddleware = async (req: ExtendedRequest, res: Response, next: NextFunction) => {

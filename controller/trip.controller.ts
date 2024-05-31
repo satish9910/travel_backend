@@ -123,7 +123,8 @@ export const GetTrips = async (req: ExtendedRequest, res: Response, next: NextFu
     })
     const cstm = customs.map((at) => {
         //@ts-ignore
-        return at.type = "custom";
+        at.type = "custom";
+        return at;
     })
     const trp = trips.map((at) => {
         //@ts-ignore

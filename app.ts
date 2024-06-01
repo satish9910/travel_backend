@@ -18,6 +18,8 @@ import morgan from 'morgan'
 import DestinationRouter from './routes/destination.routes'
 import HostRouter from './routes/host.routes'
 import customtriprouter from './routes/customtrips.routes'
+import faqRouter from './routes/faq.routes'
+import forumRouter from './routes/forum.routes'
 app.use(express.static('public'))
 app.use(express.json())
 // app.use(express.urlencoded({ extended: true }));
@@ -64,6 +66,10 @@ app.use('/destination', DestinationRouter)
 app.use('/expense', middleware.AuthMiddleware, ExpenseRouter)
 //@ts-ignore
 app.use('/custom', customtriprouter)
+//@ts-ignore
+app.use('/faq', faqRouter)
+//@ts-ignore
+app.use("/forum", middleware.AuthMiddleware, forumRouter)
 
 cron.schedule('0 0 * * *', async () => {
     console.log('Running your daily task...')

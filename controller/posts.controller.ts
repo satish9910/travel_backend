@@ -25,29 +25,9 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
     })
     return res.status(200).send({ status: 201, message: 'Created', post: post })
 }
-// export const CreatePost = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-//     const user = req.user
-//     const body = req.body
-//     if (!helper.isValidatePaylod(body, ['description']) || !req.file) {
-//         return res
-//             .status(200)
-//             .send({ status: 200, error: 'Invalid payload', error_description: 'description & image is required.' })
-//     }
-//     const post = await prisma.post.create({
-//         data: {
-//             image: helper.imageUrlGen(req.file.filename),
-//             description: body.description,
-//             user_id: user.id,
-//             media_type: body.media_type,
-//             latitude: body.latitude,
-//             longitude: body.longitude,
-//             place: body.place,
-//         },
-//     })
-//     return res.status(200).send({ status: 201, message: 'Created', post: post })
-// }
 
 export const GetOnlyVideos = async (req: ExtendedRequest, res: Response, _next: NextFunction) => {
+    const user = req.user
     const query = req.query
     const { page = 1, limit = 20 } = query
     if (Number.isNaN(page) || Number.isNaN(limit))
@@ -59,19 +39,28 @@ export const GetOnlyVideos = async (req: ExtendedRequest, res: Response, _next: 
 
     const skip = (Number(page) - 1) * Number(limit)
     try {
-        const fetchPosts = await prisma.post.findMany({
-            where: { media_type: 'VIDEO' },
-            include: {
-            user: {
-                select: {
-                id: true,
-                username: true,
-                image: true,
-                },
+        const blockedUsers = await prisma.block.findMany({
+            where: { user_id: user.id },
+            select: {
+                blocked_id: true,
             },
-            comment: true
+        })
+        const blockedUserIds = blockedUsers.map((user) => user.blocked_id)
+        const fetchPosts = await prisma.post.findMany({
+            where: { media_type: 'VIDEO', user_id: { notIn: blockedUserIds } },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        image: true,
+                    },
+                },
+                comment: true,
             },
             orderBy: { created_at: 'desc' },
+            skip: skip,
+            take: Number(limit),
         })
         for (let i = 0; i < fetchPosts.length; i++) {
             const isLiked = await prisma.likes.findFirst({
@@ -85,13 +74,6 @@ export const GetOnlyVideos = async (req: ExtendedRequest, res: Response, _next: 
         return _next(err)
     }
 }
-
-// export const GetOnlyVideos = async (req: ExtendedRequest, res: Response, _next: NextFunction) => {
-//     const user = req.user
-//     const videos = await prisma.post.findMany({ where: { user_id: user.id, media_type: 'VIDEO' } })
-
-//     return res.status(200).send({ status: 200, message: 'Ok', videos })
-// }
 
 export const GetPosts = async (req: ExtendedRequest, res: Response, _next: NextFunction) => {
     const user = req.user

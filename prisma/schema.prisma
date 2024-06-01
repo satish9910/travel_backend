@@ -37,6 +37,7 @@ model User {
   referredByCode   String?
   status           Boolean   @default(false)
   typeOfTraveller  Int?      @default(1) // 0 = solo, 1 = group
+  visible          Boolean   @default(true)
 
   post           Post[]
   Comment        Comment[]
@@ -45,6 +46,18 @@ model User {
   customTrips    CustomTrip[]
   forumQuestions ForumQuestion[]
   answers        ForumAnswer[]   @relation("UsersAnswer")
+  blocked          Block[] @relation(name: "BlockedUser")
+  blockedBy        Block[] @relation(name: "UserBlock")
+}
+
+model Block {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  blocked_id Int
+  user       User     @relation(name: "UserBlock", fields: [user_id], references: [id])
+  blocked    User     @relation(name: "BlockedUser", fields: [blocked_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
 
 model Otp {

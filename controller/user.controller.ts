@@ -48,14 +48,14 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
         const fetchPosts = await prisma.post.findMany({
             where: { user_id: { in: [...userIds, req.user.id] } },
             include: {
-            user: {
-                select: {
-                id: true,
-                username: true,
-                image: true,
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        image: true,
+                    },
                 },
-            },
-            comment: true
+                comment: true,
             },
             orderBy: { created_at: 'desc' },
         })
@@ -91,11 +91,13 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
             })
         }
     }
-    
-    if(typeOfTraveller){
+
+    if (typeOfTraveller) {
         typeOfTraveller = Number(typeOfTraveller)
-        if(Number.isNaN(typeOfTraveller)){
-            return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Invalid type of traveller' })
+        if (Number.isNaN(typeOfTraveller)) {
+            return res
+                .status(200)
+                .send({ status: 400, error: 'Bad Request', error_description: 'Invalid type of traveller' })
         }
     }
 
@@ -108,7 +110,16 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
     try {
         const updatedUser = await prisma.user.update({
             where: { id: user.id },
-            data: { username, gender, date_of_birth, bio, image: imageUrl, emergency_name, emergency_phone, typeOfTraveller },
+            data: {
+                username,
+                gender,
+                date_of_birth,
+                bio,
+                image: imageUrl,
+                emergency_name,
+                emergency_phone,
+                typeOfTraveller,
+            },
         })
         delete (updatedUser as any).password
         delete (updatedUser as any).emergency_name
@@ -134,7 +145,7 @@ const Get_follower = async (req: ExtendedRequest, res: Response, next: NextFunct
                 },
             },
         })
-        return res.status(200).send({ status: 200, message: 'Ok', followers: followers, count: followers.length})
+        return res.status(200).send({ status: 200, message: 'Ok', followers: followers, count: followers.length })
     } catch (err) {
         return next(err)
     }
@@ -240,21 +251,30 @@ const feedByPlace = async (req: ExtendedRequest, res: Response, next: NextFuncti
     if (!place) {
         return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Place is required' })
     }
-    if(typeof place !== 'string') {
-        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Place should be a string' })
+    if (typeof place !== 'string') {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'Place should be a string' })
     }
     try {
-        const posts = await prisma.post.findMany({
-            where: { place: { contains: place } },
-            include: {
-            user: {
-                select: {
-                id: true,
-                username: true,
-                image: true,
-                },
+        const blockedUsers = await prisma.block.findMany({
+            where: { user_id: user.id },
+            select: {
+                blocked_id: true,
             },
-            comment: true,
+        })
+        const blockedUserIds = blockedUsers.map((user) => user.blocked_id)
+        const posts = await prisma.post.findMany({
+            where: { place: { contains: place }, NOT: { user_id: { in: blockedUserIds } } },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        image: true,
+                    },
+                },
+                comment: true,
             },
             orderBy: { created_at: 'desc' },
         })
@@ -278,8 +298,10 @@ const getUsersByUsername = async (req: ExtendedRequest, res: Response, next: Nex
     if (!username) {
         return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Username is required' })
     }
-    if(typeof username !== 'string') {
-        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Username should be a string' })
+    if (typeof username !== 'string') {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'Username should be a string' })
     }
     try {
         let users = await prisma.user.findMany({
@@ -288,21 +310,122 @@ const getUsersByUsername = async (req: ExtendedRequest, res: Response, next: Nex
                 id: true,
                 username: true,
                 image: true,
-                followers: true, 
+                followers: true,
             },
         })
 
-        users = users.filter(user => user.id !== currentUserId)
+        users = users.filter((user) => user.id !== currentUserId)
 
-        const usersWithFollowingInfo = users.map(user => ({
+        const usersWithFollowingInfo = users.map((user) => ({
             id: user.id,
             username: user.username,
             image: user.image,
             followersCount: user.followers.length,
-            isFollowing: user.followers?.some(follow => follow.follower_id === currentUserId) || false, 
+            isFollowing: user.followers?.some((follow) => follow.follower_id === currentUserId) || false,
         }))
 
         return res.status(200).send({ status: 200, message: 'Ok', users: usersWithFollowingInfo })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const visibleStatus = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const { visible } = req.body
+
+    if (typeof visible !== 'boolean') {
+        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Invalid Payload' })
+    }
+    try {
+        const updatedUser = await prisma.user.update({
+            where: { id: user.id },
+            data: { visible: visible },
+        })
+        delete (updatedUser as any).password
+        return res.status(200).send({ status: 200, message: 'Ok', user: { updatedUser } })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const blockUser = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const { blocked_user_id } = req.body
+    if (!blocked_user_id) {
+        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'User Id is required' })
+    }
+    if (typeof blocked_user_id !== 'number') {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'User Id should be a number' })
+    }
+    try {
+        const isAlreadyFollowing = await prisma.follows.findFirst({
+            where: { user_id: blocked_user_id, follower_id: user.id },
+        })
+        if (isAlreadyFollowing) {
+            await prisma.follows.deleteMany({ where: { user_id: blocked_user_id, follower_id: user.id } })
+        }
+        const isAlreadyBlocked = await prisma.block.findFirst({
+            where: { user_id: user.id, blocked_id: blocked_user_id },
+        })
+        if (isAlreadyBlocked) {
+            return res.status(200).send({ status: 200, message: 'Ok', error: 'User already blocked' })
+        }
+        const blockedUser = await prisma.block.create({
+            data: {
+                user_id: user.id,
+                blocked_id: blocked_user_id,
+            },
+        })
+        
+        return res.status(200).send({ status: 200, message: 'Ok', blockedUser: blockedUser })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const unblockUser = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const { blocked_user_id } = req.body
+    if (!blocked_user_id) {
+        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'User Id is required' })
+    }
+    if (typeof blocked_user_id !== 'number') {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'User Id should be a number' })
+    }
+    try {
+        const blockedUser = await prisma.block.deleteMany({
+            where: {
+                user_id: user.id,
+                blocked_id: blocked_user_id,
+            },
+        })
+        return res.status(200).send({ status: 200, message: 'Ok', blockedUser: blockedUser })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const getBlockedUsers = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    try {
+        const blockedUsers = await prisma.block.findMany({
+            where: { user_id: user.id },
+            select: {
+                blocked: {
+                    select: {
+                        id: true,
+                        username: true,
+                        // image: true,
+                    },
+                },
+            },
+        })
+        return res.status(200).send({ status: 200, message: 'Ok', blockedUsers: blockedUsers })
     } catch (err) {
         return next(err)
     }
@@ -318,7 +441,11 @@ const userController = {
     GET_following,
     userTravelingStatus,
     feedByPlace,
-    getUsersByUsername
+    getUsersByUsername,
+    visibleStatus,
+    blockUser,
+    getBlockedUsers,
+    unblockUser,
 }
 
 export default userController

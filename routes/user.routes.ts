@@ -14,6 +14,14 @@ userRouter
     //@ts-ignore
     .put("/status", userController.userTravelingStatus)
     //@ts-ignore
+    .put("/visible", userController.visibleStatus)
+    //@ts-ignore
+    .post("/block", userController.blockUser)
+    //@ts-ignore
+    .get("/block", userController.getBlockedUsers)
+    //@ts-ignore
+    .post("/unblock", userController.unblockUser)
+    //@ts-ignore
     .get('/feed', userController.get_user_feed)
     //@ts-ignore
     .get('/feed/:place', userController.feedByPlace)

@@ -10,6 +10,16 @@ actionRouter
     //@ts-ignore
     .post('/comment', actionController.CommentPost)
     //@ts-ignore
-    .post('/follow', actionController.Follows)
+    // .post('/follow', actionController.Follows)
+    //@ts-ignore
+    .post('/request', actionController.sendFollowRequest)
+    //@ts-ignore
+    .get("/request", actionController.getFollowRequests)
+    //@ts-ignore
+    .put("/request/accept", actionController.acceptFollowRequest)
+    //@ts-ignore
+    .put("/request/reject", actionController.rejectFollowRequest)
+    //@ts-ignore
+    .post('/unfollow', actionController.unfollowUser)
 
 export default actionRouter

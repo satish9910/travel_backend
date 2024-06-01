@@ -431,6 +431,75 @@ const getBlockedUsers = async (req: ExtendedRequest, res: Response, next: NextFu
     }
 }
 
+const updateLatLong = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const { latitude, longitude } = req.body
+
+    if (!latitude || !longitude) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'Latitude and Longitude is required' })
+    }
+    try {
+        const updatedUser = await prisma.user.update({
+            where: { id: user.id },
+            data: { latitude: latitude, longitude: longitude },
+        })
+        delete (updatedUser as any).password
+        return res.status(200).send({ status: 200, message: 'Ok', user: updatedUser })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const getNearbyUsers = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user;
+
+    const { latitude, longitude } = user;
+
+    const blockedUsers = await prisma.block.findMany({
+        where: { user_id: user.id },
+        select: {
+            blocked_id: true,
+        },
+    })
+
+    const blockedUserIds = blockedUsers.map((user) => user.blocked_id)
+    
+    if (!latitude || !longitude) {
+        return res.status(400).json({ status: 400, error: 'Bad Request', error_description: 'Latitude and Longitude are required' });
+    }
+    try { 
+        const nearbyUsers = await prisma.user.findMany({
+            where: {
+                AND: {
+                    NOT: { id: {in: blockedUserIds} }, 
+                    id: { not: user.id } ,
+                    visible: true,
+                    latitude: { 
+                        gt: latitude - 0.45, 
+                        lt: latitude + 0.45 
+                    },
+                    longitude: { 
+                        gt: longitude - 0.45, 
+                        lt: longitude + 0.45 
+                    },
+                },
+            },
+            select: {
+                id: true,
+                username: true,
+                image: true,
+            }
+        });
+        
+        return res.status(200).json({ status: 200, message: 'Ok', nearbyUsers });
+    } catch (err) {
+        return next(err);
+    }
+};
+
+
 const userController = {
     getSuggestion,
     get_all_users,
@@ -446,6 +515,8 @@ const userController = {
     blockUser,
     getBlockedUsers,
     unblockUser,
+    updateLatLong,
+    getNearbyUsers
 }
 
 export default userController

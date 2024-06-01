@@ -27,8 +27,8 @@ const getAllForumQuestions = async (req: ExtendedRequest, res: Response, next: N
         const forumQuestions = await prisma.forumQuestion.findMany({
             include: { 
             user: { select: { id: true, username: true, image: true } }, 
-            answers: { select: { id: true }},
-            likes: { select: { id: true }}
+            answers: { include: { User: { select: { id: true, username: true, image: true } } } },
+            likes: { select: { user_id: true }}
             },
         })
 
@@ -52,7 +52,6 @@ const getForumQuestion = async (req: ExtendedRequest, res: Response, next: NextF
             include: {
                 user: { select: { id: true, username: true, image: true } },
                 answers: { include: { User: { select: { id: true, username: true, image: true } } } },
-                // likes: { select: { id: true }}
             },
         })
         return res.status(200).send({ forumQuestion })

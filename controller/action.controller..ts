@@ -131,5 +131,137 @@ export const Follows = async (req: ExtendedRequest, res: Response, next: NextFun
     return res.sendStatus(500)
 }
 
-const actionController = { LikePost, CommentPost, Follows }
+const unfollowUser = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const body = req.body
+    if (!helper.isValidatePaylod(body, ['user_id'])) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'user_id is required.' })
+    }
+    let { user_id } = req.body
+    if (Number.isNaN(Number(user_id))) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'user_id should be a number.' })
+    }
+    user_id = Number(user_id)
+    const isAlreadyFollowing = await prisma.follows.findFirst({
+        where: { user_id: user_id, follower_id: req.user.id },
+    })
+    if (!isAlreadyFollowing) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'Not following this user' })
+    }
+    try {
+        const follow = await prisma.follows.deleteMany({ where: { user_id: user_id, follower_id: req.user.id } })
+        return res.status(200).send({ status: 200, message: 'Ok', unfollow: follow })
+    } catch (err) {
+        return next(err)
+    }
+
+}
+
+const sendFollowRequest = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const body = req.body
+    if (!helper.isValidatePaylod(body, ['user_id'])) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'user_id is required.' })
+    }
+    let { user_id } = req.body
+    if (Number.isNaN(Number(user_id))) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'user_id should be a number.' })
+    }
+    user_id = Number(user_id)
+    const isAlreadyFollowing = await prisma.follows.findFirst({
+        where: { user_id: user_id, follower_id: req.user.id },
+    })
+    if (isAlreadyFollowing) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'Already following this user' })
+    }
+    try {
+        const entry = await prisma.followRequest.create({ data: { user_id: user_id, follower_id: req.user.id } })
+        return res.status(200).send({ status: 200, message: 'Ok', follow: entry })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const getFollowRequests = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const followRequests = await prisma.followRequest.findMany({
+        where: { user_id: req.user.id, status: 0 },
+        include: { follower: {
+            select: { id: true, username: true, image: true },
+        } },
+    })
+    return res.status(200).send({ status: 200, message: 'Ok', followRequests: followRequests })
+}
+
+const rejectFollowRequest = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const body = req.body
+    if (!helper.isValidatePaylod(body, ['follower_id'])) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'follower_id is required.' })
+    }
+    let { follower_id } = req.body
+    if (Number.isNaN(Number(follower_id))) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'follower_id should be a number.' })
+    }
+    follower_id = Number(follower_id)
+    const followRequest = await prisma.followRequest.findFirst({
+        where: { user_id: req.user.id, follower_id: follower_id, status: 0 },
+    })
+    if (!followRequest) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'No follow request found.' })
+    }
+    try {
+        const entry = await prisma.followRequest.delete({ where: { id: followRequest.id } })
+        return res.status(200).send({ status: 200, message: 'Rejected follow request', followRequest: entry })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const acceptFollowRequest = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const body = req.body
+    if (!helper.isValidatePaylod(body, ['follower_id'])) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'follower_id is required.' })
+    }
+    let { follower_id } = req.body
+    if (Number.isNaN(Number(follower_id))) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'follower_id should be a number.' })
+    }
+    follower_id = Number(follower_id)
+    const followRequest = await prisma.followRequest.findFirst({
+        where: { user_id: req.user.id, follower_id: follower_id, status: 0 },
+    })
+    if (!followRequest) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'No follow request found.' })
+    }
+    try {
+        const entry = await prisma.follows.create({ data: { user_id: req.user.id, follower_id: follower_id } })
+        const deletedEntry = await prisma.followRequest.delete({ where: { id: followRequest.id } })
+        return res.status(200).send({ status: 200, message: 'Accepted follow request', follow: entry })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const actionController = { LikePost, CommentPost, Follows, sendFollowRequest, getFollowRequests, rejectFollowRequest, acceptFollowRequest, unfollowUser}
 export default actionController

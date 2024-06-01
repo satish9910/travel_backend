@@ -25,8 +25,8 @@ model User {
   bio              String?
   emergency_name   String?
   emergency_phone  String?
-  latitude         String?
-  longitude        String?
+  latitude         Float?
+  longitude        Float?
   is_verified      Boolean   @default(false)
   created_at       DateTime  @default(now())
   updated_at       DateTime  @updatedAt
@@ -39,15 +39,17 @@ model User {
   typeOfTraveller  Int?      @default(1) // 0 = solo, 1 = group
   visible          Boolean   @default(true)
 
-  post           Post[]
-  Comment        Comment[]
-  follows        Follows[]       @relation(name: "FollowerUser")
-  followers      Follows[]       @relation(name: "UserFollows")
-  customTrips    CustomTrip[]
-  forumQuestions ForumQuestion[]
-  answers        ForumAnswer[]   @relation("UsersAnswer")
-  blocked          Block[] @relation(name: "BlockedUser")
-  blockedBy        Block[] @relation(name: "UserBlock")
+  post            Post[]
+  Comment         Comment[]
+  follows         Follows[]       @relation(name: "FollowerUser")
+  followers       Follows[]       @relation(name: "UserFollows")
+  customTrips     CustomTrip[]
+  forumQuestions  ForumQuestion[]
+  answers         ForumAnswer[]   @relation("UsersAnswer")
+  blocked         Block[]         @relation(name: "BlockedUser")
+  blockedBy       Block[]         @relation(name: "UserBlock")
+  followRequest   FollowRequest[] @relation(name: "FollowRequestUser")
+  followerRequest FollowRequest[] @relation(name: "FollowRequestFollower")
 }
 
 model Block {
@@ -297,4 +299,15 @@ model QLikes {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model FollowRequest {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  follower_id Int
+  status      Int      @default(0) // 0 = pending, 1 = accepted, 2 = rejected
+  user        User     @relation(name: "FollowRequestUser", fields: [user_id], references: [id])
+  follower    User     @relation(name: "FollowRequestFollower", fields: [follower_id], references: [id])
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 }

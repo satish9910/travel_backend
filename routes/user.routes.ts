@@ -33,5 +33,9 @@ userRouter
     .get('/followers', userController.Get_follower)
     //@ts-ignore
     .get('/following', userController.GET_following)
+    //@ts-ignore
+    .put('/location', userController.updateLatLong)
+    //@ts-ignore
+    .get('/nearby', userController.getNearbyUsers)
 
 export default userRouter

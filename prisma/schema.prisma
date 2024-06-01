@@ -38,11 +38,13 @@ model User {
   status           Boolean   @default(false)
   typeOfTraveller  Int?      @default(1) // 0 = solo, 1 = group
 
-  post        Post[]
-  Comment     Comment[]
-  follows     Follows[]    @relation(name: "FollowerUser")
-  followers   Follows[]    @relation(name: "UserFollows")
-  customTrips CustomTrip[]
+  post           Post[]
+  Comment        Comment[]
+  follows        Follows[]       @relation(name: "FollowerUser")
+  followers      Follows[]       @relation(name: "UserFollows")
+  customTrips    CustomTrip[]
+  forumQuestions ForumQuestion[]
+  answers        ForumAnswer[]   @relation("UsersAnswer")
 }
 
 model Otp {
@@ -242,4 +244,44 @@ model PaymentOrder {
   user_id    Int
   serviceId  Int
   created_at DateTime @default(now())
+}
+
+model FAQ {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
+
+model ForumQuestion {
+  id         Int           @id @default(autoincrement())
+  question   String
+  answers    ForumAnswer[] @relation("QuestionToAnswer")
+  user_id    Int
+  user       User          @relation(fields: [user_id], references: [id])
+  likes      QLikes[]
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+}
+
+model ForumAnswer {
+  id          Int           @id @default(autoincrement())
+  answer      String
+  question_id Int
+  question    ForumQuestion @relation("QuestionToAnswer", fields: [question_id], references: [id])
+  user_id     Int
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  User        User?         @relation("UsersAnswer", fields: [user_id], references: [id])
+}
+
+model QLikes {
+  id          Int           @id @default(autoincrement())
+  question_id Int
+  user_id     Int
+  question    ForumQuestion @relation(fields: [question_id], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

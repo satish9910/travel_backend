@@ -6,7 +6,7 @@ const messageRouter = Router()
 //@ts-ignore
 messageRouter.post('/send/:receiverId', messageController.sendMessage)
 //@ts-ignore
-messageRouter.post('/conversation/:receiverId', messageController.getConversation)
+messageRouter.post('/conversation/:chatId', messageController.getConversation)
 //@ts-ignore
 messageRouter.get('/conversations', messageController.getAllConversations)
 

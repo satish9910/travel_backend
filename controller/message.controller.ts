@@ -88,29 +88,16 @@ export const sendMessage = async (req: ExtendedRequest, res: Response, next: Nex
 export const getConversation = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const senderId = req.user.id
-        const receiverId = req.params.receiverId
-
-        if (!receiverId) return res.status(400).send({ message: 'Receiver is required' })
-        if (senderId === receiverId)
-            return res.status(400).send({ message: 'You can not get conversation with yourself' })
-
-        let senderConversations = await prisma.participant.findMany({
-            where: {
-                userId: senderId,
-            },
-        })
-        let senderConversationIds = senderConversations.map((participant) => participant.conversationId)
+        const chatId = req.params.chatId
 
         const getConversation = await prisma.conversation.findFirst({
             where: {
-                id: {
-                    in: senderConversationIds,
+            id: Number(chatId),
+            participants: {
+                some: {
+                userId: senderId,
                 },
-                participants: {
-                    some: {
-                        userId: Number(receiverId),
-                    },
-                },
+            },
             },
             include: { messages: true, participants: true },
         })
@@ -124,7 +111,7 @@ export const getConversation = async (req: ExtendedRequest, res: Response, next:
 
 export const getAllConversations = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
-        const senderId = req.user._id
+        const senderId = req.user.id
         let conversations = await prisma.conversation.findMany({
             where: { participants: { some: { user: { id: senderId } } } },
             include: { messages: true, participants: {select: {user: {select: {username: true, image: true, id: true}}}}},

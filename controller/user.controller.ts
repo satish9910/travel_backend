@@ -80,7 +80,7 @@ const get_user_details = (req: ExtendedRequest, res: Response, _next: NextFuncti
 
 const update_user = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
-    let { username, gender, date_of_birth, bio, emergency_name, emergency_phone, typeOfTraveller } = req.body
+    let { username, gender, date_of_birth, bio, emergency_name, emergency_phone, typeOfTraveller, image } = req.body
     if (gender) {
         gender = Number(gender)
         if (Number.isNaN(gender)) {
@@ -101,12 +101,12 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
         }
     }
 
-    let imagePath: string | undefined
-    if (req.file) {
-        imagePath = req.file.filename
-    }
-    let imageUrl
-    if (imagePath) imageUrl = helper.imageUrlGen(imagePath)
+    // let imagePath: string | undefined
+    // if (req.file) {
+    //     imagePath = req.file.filename
+    // }
+    // let imageUrl
+    // if (imagePath) imageUrl = helper.imageUrlGen(imagePath)
     try {
         const updatedUser = await prisma.user.update({
             where: { id: user.id },
@@ -115,7 +115,7 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
                 gender,
                 date_of_birth,
                 bio,
-                image: imageUrl,
+                image,
                 emergency_name,
                 emergency_phone,
                 typeOfTraveller,

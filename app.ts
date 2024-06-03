@@ -5,6 +5,8 @@ import userRouter from './routes/user.routes'
 import postRouter from './routes/post.routes'
 import fs from 'fs'
 import path from 'path'
+import http from 'http';
+import { Server } from 'socket.io';
 import actionRouter from './routes/action.routes'
 import tripRouter from './routes/trip.routes'
 import ServiceRouter from './routes/service.routes'
@@ -20,6 +22,7 @@ import HostRouter from './routes/host.routes'
 import customtriprouter from './routes/customtrips.routes'
 import faqRouter from './routes/faq.routes'
 import forumRouter from './routes/forum.routes'
+import messageRouter from './routes/message.routes'
 app.use(express.static('public'))
 app.use(express.json())
 // app.use(express.urlencoded({ extended: true }));
@@ -27,6 +30,41 @@ app.use(express.json())
 // app.use(statusMonitor())
 app.use(morgan('tiny'))
 app.use(cors())
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
+    }
+});
+
+export const getReceiverSocketId = (receiverId: string) => {
+    return userSocketMap[receiverId]
+}
+
+const userSocketMap: { [key: string]: string } = {};
+
+io.on('connection', (socket) => {
+    console.log('user connected', socket.id);
+    const userId = socket.handshake.query.userId
+    if (typeof userId === 'string') {
+        userSocketMap[userId] = socket.id;
+    }
+
+    io.emit('getOnlineUsers', Object.keys(userSocketMap))
+
+    socket.on('disconnect', () => {
+        console.log('user disconnected', socket.id);
+        for(const key in userSocketMap){
+            if(userSocketMap[key] === socket.id){
+                delete userSocketMap[key]
+            }
+        }
+        io.emit('getOnlineUsers', Object.keys(userSocketMap))
+    })
+})
 
 app.get('/ping', (_req, res) => {
     return res.status(200).send({ status: 200, message: 'pong' })
@@ -70,6 +108,8 @@ app.use('/custom', customtriprouter)
 app.use('/faq', faqRouter)
 //@ts-ignore
 app.use("/forum", middleware.AuthMiddleware, forumRouter)
+//@ts-ignore
+app.use('/message', middleware.AuthMiddleware, messageRouter)
 
 cron.schedule('0 0 * * *', async () => {
     console.log('Running your daily task...')
@@ -120,4 +160,5 @@ app.all('*', (_req, res) => {
     })
 })
 
-export default app
+export default server
+export { io, server}

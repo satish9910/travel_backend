@@ -3,6 +3,7 @@ import { ExtendedRequest } from '../utils/middleware'
 import { PrismaClient } from '@prisma/client'
 import helper from '../utils/helpers'
 const prisma = new PrismaClient()
+import crypto from 'node:crypto'
 
 const get_all_users = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const query = req.query
@@ -501,6 +502,108 @@ const getNearbyUsers = async (req: ExtendedRequest, res: Response, next: NextFun
     }
 };
 
+const deleteAccount = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user;
+    try {
+        await prisma.user.delete({
+            where: { id: user.id }
+        });
+        return res.status(200).json({ status: 200, message: 'Account deleted successfully' });
+    } catch (err) {
+        return next(err);
+    }
+}
+
+const SALT_ROUND = process.env.SALT_ROUND!
+const ITERATION = 100
+const KEYLENGTH = 10
+const DIGEST_ALGO = 'sha512'
+
+const changePassword = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const { oldPassword, newPassword } = req.body
+    if (!helper.isValidatePaylod(req.body, ['oldPassword', 'newPassword'])) {
+        return res.status(200).send({
+            status: 400,
+            error: 'Invalid payload',
+            error_description: 'oldPassword, newPassword are required.',
+        })
+    }
+    let hash_old_password: string | Buffer = crypto.pbkdf2Sync(
+        oldPassword,
+        SALT_ROUND,
+        ITERATION,
+        KEYLENGTH,
+        DIGEST_ALGO
+    )
+    hash_old_password = hash_old_password.toString('hex')
+    let hash_new_password: string | Buffer = crypto.pbkdf2Sync(
+        newPassword,
+        SALT_ROUND,
+        ITERATION,
+        KEYLENGTH,
+        DIGEST_ALGO
+    )
+    hash_new_password = hash_new_password.toString('hex')
+    const user = await prisma.user.findFirst({ where: { id: req.user.id } })
+    if (!user) {
+        return res.status(200).send({ status: 404, error: 'Not Found', error_description: 'User not found.' })
+    }
+    
+    if (user.password !== hash_old_password) {
+        return res.status(200).send({
+            status: 400,
+            error: 'Bad Request',
+            error_description: 'Old password is not valid.',
+        })
+    }
+    try {
+        await prisma.user.update({ where: { id: user.id }, data: { password: hash_new_password } })
+        return res.status(200).send({ status: 200, message: 'Ok' })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const rateService = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const { service_id, rating } = req.body
+    if (!helper.isValidatePaylod(req.body, ['service_id', 'rating'])) {
+        return res.status(200).send({
+            status: 400,
+            error: 'Invalid payload',
+            error_description: 'service_id, rating are required.',
+        })
+    }
+    if (isNaN(Number(rating))) {
+        return res.status(200).send({
+            status: 400,
+            error: 'Bad Request',
+            error_description: 'Rating should be a number.',
+        })
+    }
+    if (rating < 1 || rating > 5) {
+        return res.status(200).send({
+            status: 400,
+            error: 'Bad Request',
+            error_description: 'Rating should be between 1 and 5.',
+        })
+    }
+    try {
+        const service = await prisma.service.findFirst({ where: { id: service_id } })
+        if (!service) {
+            return res.status(200).send({ status: 404, error: 'Not Found', error_description: 'Service not found.' })
+        }
+        await prisma.service.update({
+            where: { id: service_id },
+            data: {
+                rating : (service.rating + rating) / (service.rating_count + 1),
+                rating_count: service.rating_count + 1,
+            },
+        })
+        return res.status(200).send({ status: 200, message: 'Ok' })
+    } catch (err) {
+        return next(err)
+    }
+}
 
 const userController = {
     getSuggestion,
@@ -518,7 +621,10 @@ const userController = {
     getBlockedUsers,
     unblockUser,
     updateLatLong,
-    getNearbyUsers
+    getNearbyUsers,
+    deleteAccount,
+    changePassword,
+    rateService
 }
 
 export default userController

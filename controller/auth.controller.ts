@@ -3,6 +3,7 @@ import helper from '../utils/helpers'
 import crypto from 'node:crypto'
 import { PrismaClient } from '@prisma/client'
 import jwt from 'jsonwebtoken'
+import { ExtendedRequest } from '../utils/middleware'
 const prisma = new PrismaClient()
 
 const SALT_ROUND = process.env.SALT_ROUND!

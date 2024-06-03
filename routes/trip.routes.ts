@@ -12,6 +12,8 @@ TripRouter
     .post("/verify", tripController.PaymentVerification)
     //@ts-ignore
     .get('/:id', tripController.GetSpecificTrip)
+    //@ts-ignore
+    .put('/:id', tripController.cancelTrip)
 
 export default TripRouter
 

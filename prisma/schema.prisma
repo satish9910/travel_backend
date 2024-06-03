@@ -140,6 +140,7 @@ model Service {
   itinerary        Json?
   images           Json?
   rating           Float        @default(0)
+  rating_count     Int          @default(0)
   price            Int
   trip             Trip[]
   host_id          Int

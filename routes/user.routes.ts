@@ -37,5 +37,11 @@ userRouter
     .put('/location', userController.updateLatLong)
     //@ts-ignore
     .get('/nearby', userController.getNearbyUsers)
+    //@ts-ignore
+    .delete('/delete', userController.deleteAccount)
+    //@ts-ignore
+    .post('/reset', userController.changePassword)
+    //@ts-ignore
+    .put('/rating', userController.rateService)
 
 export default userRouter

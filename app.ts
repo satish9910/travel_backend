@@ -111,7 +111,7 @@ app.use("/forum", middleware.AuthMiddleware, forumRouter)
 //@ts-ignore
 app.use('/message', middleware.AuthMiddleware, messageRouter)
 
-cron.schedule('0 0 * * *', async () => {
+cron.schedule('0 0 * * *', async () => {      
     console.log('Running your daily task...')
 
     try {
@@ -132,10 +132,18 @@ cron.schedule('0 0 * * *', async () => {
                     where: { id: trip.id },
                     data: { status: 'completed' },
                 })
+                await prisma.user.update({
+                    where: { id: trip.user_id },
+                    data: { status: false },
+                })
             } else if (startDate < today && today < endDate) {
                 await prisma.trip.update({
                     where: { id: trip.id },
                     data: { status: 'ongoing' },
+                })
+                await prisma.user.update({
+                    where: { id: trip.user_id },
+                    data: { status: true },
                 })
             } else {
                 await prisma.trip.update({

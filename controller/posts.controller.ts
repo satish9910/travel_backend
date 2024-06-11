@@ -87,7 +87,25 @@ export const GetPostsByUserId = async (req: ExtendedRequest, res: Response, _nex
     const posts = await prisma.post.findMany({
         where: { user_id: id },
         include: {
-            comment: true,
+            comment: {
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            username: true,
+                            image: true,
+                        }
+                    }
+                }
+            },
+            user: {
+                select: {
+                    id: true,
+                    username: true,
+                    image: true,
+                    status: true,
+                }
+            }
         },
     })
     const user = await prisma.user.findFirst({ where: { id: id } })

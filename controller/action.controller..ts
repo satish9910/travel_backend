@@ -184,6 +184,12 @@ const sendFollowRequest = async (req: ExtendedRequest, res: Response, next: Next
             .status(200)
             .send({ status: 400, error: 'Bad Request', error_description: 'Already following this user' })
     }
+    const isAlreadyRequested = await prisma.followRequest.findFirst({
+        where: { user_id: user_id, follower_id: req.user.id, status: 0 },
+    })
+    if(isAlreadyRequested) {
+        return res.send({ status: 400, error: 'Bad Request', error_description: 'Already sent follow request' })
+    }
     try {
         const entry = await prisma.followRequest.create({ data: { user_id: user_id, follower_id: req.user.id } })
         return res.status(200).send({ status: 200, message: 'Ok', follow: entry })

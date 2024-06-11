@@ -20,6 +20,7 @@ model User {
   password         String
   email            String?   @unique
   image            String?
+  background_image String?
   gender           Int? // 0 = female, 1 = male
   date_of_birth    String?
   bio              String?

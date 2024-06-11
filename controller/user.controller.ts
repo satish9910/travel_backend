@@ -81,7 +81,7 @@ const get_user_details = (req: ExtendedRequest, res: Response, _next: NextFuncti
 
 const update_user = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
-    let { username, gender, date_of_birth, bio, emergency_name, emergency_phone, typeOfTraveller, image } = req.body
+    let { username, gender, date_of_birth, bio, emergency_name, emergency_phone, typeOfTraveller, image, background_image } = req.body
     if (gender) {
         gender = Number(gender)
         if (Number.isNaN(gender)) {
@@ -117,6 +117,7 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
                 date_of_birth,
                 bio,
                 image,
+                background_image,
                 emergency_name,
                 emergency_phone,
                 typeOfTraveller,
@@ -312,6 +313,7 @@ const getUsersByUsername = async (req: ExtendedRequest, res: Response, next: Nex
                 username: true,
                 image: true,
                 followers: true,
+                status: true,
             },
         })
 
@@ -323,6 +325,7 @@ const getUsersByUsername = async (req: ExtendedRequest, res: Response, next: Nex
             image: user.image,
             followersCount: user.followers.length,
             isFollowing: user.followers?.some((follow) => follow.follower_id === currentUserId) || false,
+            status: user.status,
         }))
 
         return res.status(200).send({ status: 200, message: 'Ok', users: usersWithFollowingInfo })
@@ -421,7 +424,7 @@ const getBlockedUsers = async (req: ExtendedRequest, res: Response, next: NextFu
                     select: {
                         id: true,
                         username: true,
-                        // image: true,
+                        image: true,
                     },
                 },
             },
@@ -605,6 +608,34 @@ const rateService = async (req: ExtendedRequest, res: Response, next: NextFuncti
     }
 }
 
+const getUserFollowersFollowingById = async (req: Request, res: Response, next: NextFunction) => {
+    const userId = Number(req.params.id)
+    if (isNaN(userId)) {
+        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Invalid user id' })
+    }
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                followers: {
+                    include: {follower: {select: {id: true, username: true, image: true}}}
+                },
+                follows: {
+                    include: {user: {select: {id: true, username: true, image: true}}}
+                }
+            }
+        })
+        if (!user) {
+            return res.status(200).send({ status: 404, error: 'Not Found', error_description: 'User not found.' })
+        }
+        delete (user as any).password
+        return res.status(200).send({ status: 200, message: 'Ok', user: user })
+    } catch (err) {
+        return next(err)
+    }
+
+}
+
 const userController = {
     getSuggestion,
     get_all_users,
@@ -624,7 +655,8 @@ const userController = {
     getNearbyUsers,
     deleteAccount,
     changePassword,
-    rateService
+    rateService,
+    getUserFollowersFollowingById
 }
 
 export default userController

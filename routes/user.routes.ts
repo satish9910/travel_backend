@@ -43,5 +43,7 @@ userRouter
     .post('/reset', userController.changePassword)
     //@ts-ignore
     .put('/rating', userController.rateService)
+    //@ts-ignore
+    .post('/friends/:id', userController.getUserFollowersFollowingById)
 
 export default userRouter

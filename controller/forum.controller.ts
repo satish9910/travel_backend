@@ -6,16 +6,14 @@ const prisma = new PrismaClient()
 
 const createForumQuestion = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
-    console.log(user, 'user')
 
     const body = req.body
-    console.log(body, 'body')
 
     try {
         if (!helper.isValidatePaylod(body, ['question'])) {
             return res.status(200).send({ error: 'Invalid payload', error_description: 'question is required.' })
         }
-        const forumQuestion = await prisma.forumQuestion.create({ data: { question: body.question, user_id: user.id } })
+        const forumQuestion = await prisma.forumQuestion.create({ data: { question: body.question, user: { connect: { id: user.id, username: user.username, image: user.image } } } })
         return res.status(200).send({ message: 'forum question created', forumQuestion })
     } catch (err) {
         return next(err)
@@ -71,7 +69,7 @@ const createAnswer = async (req: ExtendedRequest, res: Response, next: NextFunct
         const forumAnswer = await prisma.forumAnswer.create({
             data: { answer: body.answer, user_id: user.id, question_id: questionId },
         })
-        const allAnswers = await prisma.forumAnswer.findMany({where: { question_id: questionId }})
+        const allAnswers = await prisma.forumAnswer.findMany({where: { question_id: questionId }, include: { User: { select: { id: true, username: true, image: true } } }})
         return res.status(200).send({ message: 'forum answer created', allAnswers })
     } catch (err) {
         return next(err)

@@ -314,6 +314,7 @@ const getUsersByUsername = async (req: ExtendedRequest, res: Response, next: Nex
                 image: true,
                 followers: true,
                 status: true,
+                followRequest: {select: {status: true}}
             },
         })
 
@@ -326,6 +327,7 @@ const getUsersByUsername = async (req: ExtendedRequest, res: Response, next: Nex
             followersCount: user.followers.length,
             isFollowing: user.followers?.some((follow) => follow.follower_id === currentUserId) || false,
             status: user.status,
+            followRequest: user.followRequest
         }))
 
         return res.status(200).send({ status: 200, message: 'Ok', users: usersWithFollowingInfo })

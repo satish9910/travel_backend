@@ -94,9 +94,9 @@ export const GetPostsByUserId = async (req: ExtendedRequest, res: Response, _nex
                             id: true,
                             username: true,
                             image: true,
-                        }
-                    }
-                }
+                        },
+                    },
+                },
             },
             user: {
                 select: {
@@ -104,17 +104,62 @@ export const GetPostsByUserId = async (req: ExtendedRequest, res: Response, _nex
                     username: true,
                     image: true,
                     status: true,
+                },
+            },
+        },
+    })
+    const user = await prisma.user.findFirst({
+        where: { id: id },
+        include: {
+            followers: {
+                include: {
+                    follower: {
+                        select: {
+                            id: true,
+                            username: true,
+                            image: true,
+                            status: true,
+                            is_verified: true,
+                            followerRequest: { select: { status: true } },
+                        },
+                    },
+                },
+            },
+            follows: {
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            username: true,
+                            image: true,
+                            status: true,
+                            is_verified: true,
+                            followerRequest: { select: { status: true } },
+                        },
+                    },
+                },
+            },
+            trips: {
+                include: {
+                    service: true
                 }
             }
         },
     })
-    const user = await prisma.user.findFirst({ where: { id: id } })
-    const follower_count = await prisma.follows.count({ where: { user_id: id } })
+    delete (user as any).password;
+    const follower_count = await prisma.follows.count({ where: { user_id: id } });
     const trip_count = await prisma.trip.count({ where: { user_id: id } })
 
     return res
         .status(200)
-        .send({ status: 200, message: 'Ok', posts, user_follower_count: follower_count, user_trip_count: trip_count, user: {user_id: user?.id, username: user?.username, image: user?.image} })
+        .send({
+            status: 200,
+            message: 'Ok',
+            posts,
+            user_follower_count: follower_count,
+            user_trip_count: trip_count,
+            user: user,
+        })
 }
 
 export const GetSpecificPost = async (req: ExtendedRequest, res: Response, next: NextFunction) => {

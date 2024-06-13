@@ -312,9 +312,17 @@ const getUsersByUsername = async (req: ExtendedRequest, res: Response, next: Nex
                 id: true,
                 username: true,
                 image: true,
+                latitude: true,
+                longitude: true,
                 followers: true,
                 status: true,
-                followRequest: {select: {status: true}}
+                followRequest: {
+                    select: {
+                        user_id: true,
+                        follower_id: true,
+                        status: true
+                    }
+                }
             },
         })
 
@@ -324,12 +332,14 @@ const getUsersByUsername = async (req: ExtendedRequest, res: Response, next: Nex
             id: user.id,
             username: user.username,
             image: user.image,
+            latitude: user.latitude,
+            longitude: user.longitude,
             followersCount: user.followers.length,
             isFollowing: user.followers?.some((follow) => follow.follower_id === currentUserId) || false,
             status: user.status,
             followRequest: user.followRequest
-        }))
-
+        })) 
+    
         return res.status(200).send({ status: 200, message: 'Ok', users: usersWithFollowingInfo })
     } catch (err) {
         return next(err)

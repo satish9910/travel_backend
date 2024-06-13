@@ -45,5 +45,7 @@ userRouter
     .put('/rating', userController.rateService)
     //@ts-ignore
     .post('/friends/:id', userController.getUserFollowersFollowingById)
+    //@ts-ignore
+    .post('/kyc', userController.submitKycDetails)
 
 export default userRouter

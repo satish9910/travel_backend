@@ -610,7 +610,7 @@ const rateService = async (req: ExtendedRequest, res: Response, next: NextFuncti
     }
 }
 
-const getUserFollowersFollowingById = async (req: Request, res: Response, next: NextFunction) => {
+const getUserFollowersFollowingById = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const userId = Number(req.params.id)
     if (isNaN(userId)) {
         return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Invalid user id' })
@@ -620,10 +620,10 @@ const getUserFollowersFollowingById = async (req: Request, res: Response, next: 
             where: { id: userId },
             include: {
                 followers: {
-                    include: {follower: {select: {id: true, username: true, image: true}}}
+                    include: {follower: {select: {id: true, username: true, image: true, status: true, is_verified: true, followerRequest: {select: {status: true}}}}}
                 },
                 follows: {
-                    include: {user: {select: {id: true, username: true, image: true}}}
+                    include: {user: {select: {id: true, username: true, image: true, status: true, is_verified: true, followerRequest: {select: {status: true}}}}}
                 }
             }
         })
@@ -636,6 +636,36 @@ const getUserFollowersFollowingById = async (req: Request, res: Response, next: 
         return next(err)
     }
 
+}
+
+const submitKycDetails = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const body = req.body
+    if (!helper.isValidatePaylod(body, ['name', 'address', 'phone', 'email', 'document'])) {
+        return res.status(200).send({
+            status: 400,
+            error: 'Invalid payload',
+            error_description: 'name, address, phone, email, document are required.',
+        })
+    }
+    try {
+        await prisma.kYC.create({
+            data: {
+                name: body.name,
+                address: body.address,
+                phone: body.phone,
+                alternate_phone: body.alternate_phone,
+                email: body.email,
+                alternate_email: body.alternate_email,
+                document_type: body.document_type,
+                document: body.document,
+                user_id: user.id
+            }
+        })
+        return res.status(200).send({ status: 200, message: 'Ok' })
+    } catch (err) {
+        return next(err)
+    }
 }
 
 const userController = {
@@ -658,7 +688,8 @@ const userController = {
     deleteAccount,
     changePassword,
     rateService,
-    getUserFollowersFollowingById
+    getUserFollowersFollowingById,
+    submitKycDetails
 }
 
 export default userController

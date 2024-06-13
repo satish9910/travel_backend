@@ -84,6 +84,12 @@ export const GetPosts = async (req: ExtendedRequest, res: Response, _next: NextF
 
 export const GetPostsByUserId = async (req: ExtendedRequest, res: Response, _next: NextFunction) => {
     const id = req.body.userId
+    const isFollowing = await prisma.follows.findFirst({
+        where: { user_id:id, follower_id: req.user.id },
+    })
+    const isRequested = await prisma.followRequest.findFirst({
+        where: { user_id: id, follower_id: req.user.id },
+    })
     const posts = await prisma.post.findMany({
         where: { user_id: id },
         include: {
@@ -159,6 +165,8 @@ export const GetPostsByUserId = async (req: ExtendedRequest, res: Response, _nex
             user_follower_count: follower_count,
             user_trip_count: trip_count,
             user: user,
+            isFollowing: isFollowing ? true : false,
+            isRequested: isRequested ? true : false,
         })
 }
 

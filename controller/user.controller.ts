@@ -42,8 +42,6 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
         const userIdsObjArr = await prisma.follows.findMany({
             where: { follower_id: req.user.id },
             select: { user_id: true },
-            skip: skip,
-            take: Number(limit),
         })
         const userIds = userIdsObjArr.map((user_id) => user_id.user_id)
         const fetchPosts = await prisma.post.findMany({
@@ -54,6 +52,7 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
                         id: true,
                         username: true,
                         image: true,
+                        status: true
                     },
                 },
                 comment: {
@@ -63,12 +62,15 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
                                 id: true,
                                 username: true,
                                 image: true,
+                                status: true,
                             }
-                        }
-                    }
+                        },
+                    },
                 },
             },
             orderBy: { created_at: 'desc' },
+            skip: skip,
+            take: Number(limit),
         })
         for (let i = 0; i < fetchPosts.length; i++) {
             const isLiked = await prisma.likes.findFirst({
@@ -682,6 +684,31 @@ const submitKycDetails = async (req: ExtendedRequest, res: Response, next: NextF
     }
 }
 
+const getFollowStatus = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const { user_id } = req.body
+    if (!user_id) {
+        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'User Id is required' })
+    }
+    if (typeof user_id !== 'number') {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'User Id should be a number' })
+    }
+    try {
+        const isFollowing = await prisma.follows.findFirst({
+            where: { user_id: user_id, follower_id: user.id },
+        })
+        const isRequested = await prisma.followRequest.findFirst({
+            where: { user_id: user_id, follower_id: user.id, status: 0 },
+        })
+        return res.status(200).send({ status: 200, message: 'Ok', isFollowing: isFollowing ? true : false, isRequested: isRequested ? true : false })
+    } catch (err) {
+        return next(err)
+    }
+
+}
+
 const userController = {
     getSuggestion,
     get_all_users,
@@ -703,7 +730,8 @@ const userController = {
     changePassword,
     rateService,
     getUserFollowersFollowingById,
-    submitKycDetails
+    submitKycDetails,
+    getFollowStatus
 }
 
 export default userController

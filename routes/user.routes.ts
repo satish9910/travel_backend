@@ -47,5 +47,7 @@ userRouter
     .post('/friends/:id', userController.getUserFollowersFollowingById)
     //@ts-ignore
     .post('/kyc', userController.submitKycDetails)
+    //@ts-ignore
+    .post('/followStatus', userController.getFollowStatus)
 
 export default userRouter

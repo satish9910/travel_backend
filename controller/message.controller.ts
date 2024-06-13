@@ -87,16 +87,17 @@ export const sendMessage = async (req: ExtendedRequest, res: Response, next: Nex
 export const getConversation = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const senderId = req.user.id
-        const chatId = req.params.chatId
+        const receiverId = req.params.receiverId
 
         const getConversation = await prisma.conversation.findFirst({
             where: {
-            id: Number(chatId),
-            participants: {
-                some: {
-                userId: senderId,
+                participants: {
+                    every: {
+                        userId: {
+                            in: [senderId, Number(receiverId)],
+                        },
+                    },
                 },
-            },
             },
             include: { messages: true, participants: true },
         })

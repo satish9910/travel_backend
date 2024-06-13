@@ -9,5 +9,13 @@ messageRouter.post('/send/:receiverId', messageController.sendMessage)
 messageRouter.post('/conversation/:receiverId', messageController.getConversation)
 //@ts-ignore
 messageRouter.get('/conversations', messageController.getAllConversations)
+//@ts-ignore
+messageRouter.post('/group', messageController.createGroup)
+//@ts-ignore
+messageRouter.post('/group/:conversationId', messageController.sendGroupMessage)
+//@ts-ignore
+messageRouter.post('/group/add/:conversationId', messageController.addParticipantsToGroup)
+
+
 
 export default messageRouter

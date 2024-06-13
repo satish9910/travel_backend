@@ -56,7 +56,17 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
                         image: true,
                     },
                 },
-                comment: true,
+                comment: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                username: true,
+                                image: true,
+                            }
+                        }
+                    }
+                },
             },
             orderBy: { created_at: 'desc' },
         })
@@ -316,13 +326,7 @@ const getUsersByUsername = async (req: ExtendedRequest, res: Response, next: Nex
                 longitude: true,
                 followers: true,
                 status: true,
-                followRequest: {
-                    select: {
-                        user_id: true,
-                        follower_id: true,
-                        status: true
-                    }
-                }
+                followRequest: true,
             },
         })
 
@@ -335,9 +339,9 @@ const getUsersByUsername = async (req: ExtendedRequest, res: Response, next: Nex
             latitude: user.latitude,
             longitude: user.longitude,
             followersCount: user.followers.length,
-            isFollowing: user.followers?.some((follow) => follow.follower_id === currentUserId) || false,
+            isFollowing: user.followers.some((follow) => follow.follower_id === currentUserId),
+            isRequested: user.followRequest.some((request) => request.follower_id === currentUserId && request.status === 0),
             status: user.status,
-            followRequest: user.followRequest
         })) 
     
         return res.status(200).send({ status: 200, message: 'Ok', users: usersWithFollowingInfo })

@@ -52,7 +52,7 @@ model User {
   followRequest   FollowRequest[] @relation(name: "FollowRequestUser")
   followerRequest FollowRequest[] @relation(name: "FollowRequestFollower")
   sender          Message[]       @relation("sender")
-  // receiver        Message[]       @relation("receiver")
+  receiver        Message[]       @relation("receiver")
   participated    Participant[]
   kyc             KYC?
   kycStatus       Int?            @default(0) // 0 = pending, 1 = accepted, 2 = rejected
@@ -345,11 +345,11 @@ model Message {
   id              Int          @id @default(autoincrement())
   message         String
   user_id         Int
-  // receiver_id     Int
+  receiver_id     Int?
   conversation_id Int
   conversation    Conversation @relation(fields: [conversation_id], references: [id])
   sender          User         @relation("sender", fields: [user_id], references: [id])
-  // receiver        User         @relation("receiver", fields: [receiver_id], references: [id])
+  receiver        User?         @relation("receiver", fields: [receiver_id], references: [id])
   created_at      DateTime     @default(now())
   updated_at      DateTime     @updatedAt
 }

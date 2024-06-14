@@ -28,6 +28,9 @@ export const sendMessage = async (req: ExtendedRequest, res: Response, next: Nex
                         userId: Number(receiverId),
                     },
                 },
+                type: {
+                    not: 'GROUP',   
+                },
             },
         })
        
@@ -191,6 +194,9 @@ export const getConversation = async (req: ExtendedRequest, res: Response, next:
                         },
                     },
                 },
+                type: {
+                    not: 'GROUP',
+                }
             },
             include: { messages: true, participants: {
                 select: {

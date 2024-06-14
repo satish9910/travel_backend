@@ -301,5 +301,41 @@ const socialSignUp = async (req: Request, res: Response, next: NextFunction, ema
     })
 }
 
-const authController = { Login, ForgotPassword, Signup, SendOtp, VerifyOtp, HostLogin, socialLogin }
+const superAdminLogin = async (req: Request, res: Response, next: NextFunction) => {
+    const body = req.body
+
+    if (!helper.isValidatePaylod(body, ['username', 'password'])) {
+        return res.status(200).send({
+            status: 400,
+            error: 'Invalid payload',
+            error_description: 'username, password are requried.',
+        })
+    }
+    const userDetails = await prisma.superAdmin.findUnique({
+        where: { username: body.username, password: body.password },
+    })
+
+    if (!userDetails) {
+        return res.status(200).send({
+            status: 200,
+            error: 'Invalid credentials.',
+            error_description: 'username or password is not valid',
+        })
+    }
+    const token = jwt.sign({ phone: userDetails.phone }, process.env.JWT_SECRET!, {
+        expiresIn: '7d',
+    })
+
+    return res.status(200).send({
+        status: 200,
+        message: 'Ok',
+        user: {
+            username: userDetails.username,
+        },
+        token: token,
+    })
+
+}
+
+const authController = { Login, ForgotPassword, Signup, SendOtp, VerifyOtp, HostLogin, socialLogin, superAdminLogin}
 export default authController

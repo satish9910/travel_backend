@@ -96,6 +96,47 @@ const HostAuthMiddleware = async (req: ExtendedRequest, res: Response, next: Nex
     next()
 }
 
+const superAdminAuthMiddleware = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const token = req.headers?.authorization
+
+    if (!token) {
+        return res.status(200).send({
+            status: 400,
+            error: 'Authentication failed',
+            error_description: 'token is required',
+        })
+    }
+
+    const splittedToken = token.split(' ')
+    if (splittedToken[0] !== 'Bearer') {
+        return res.status(200).send({
+            status: 400,
+            error: 'Authentication failed',
+            error_description: 'Invalid token type',
+        })
+    }
+
+    let decryptedToken: any
+    try {
+        decryptedToken = jwt.verify(splittedToken[1], process.env.JWT_SECRET!)
+    } catch (err: any) {
+        return next(err)
+    }
+
+    const phone: string = decryptedToken?.phone
+    if (!phone) {
+        const err = new Error("Error: token doens't contain phone")
+        return next(err)
+    }
+    const user = await prisma.superAdmin.findFirst({ where: { phone: phone } })
+    if (!user) {
+        return res.status(200).send({ status: 400, error: 'user not found.', error_description: 'Account had closed.' })
+    }
+    delete (user as any)?.password
+    req.user = user
+    next()
+}
+
 const ErrorHandler = (err: Error, req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof Error) {
         if (err.name === 'PrismaClientKnownRequestError') {
@@ -122,6 +163,6 @@ const AccountVerificationHandler = async (req: ExtendedRequest, res: Response, n
     next()
 }
 
-const middleware = { ErrorHandler, AuthMiddleware, AccountVerificationHandler, HostAuthMiddleware }
+const middleware = { ErrorHandler, AuthMiddleware, AccountVerificationHandler, HostAuthMiddleware, superAdminAuthMiddleware }
 
 export default middleware

@@ -706,7 +706,6 @@ const getFollowStatus = async (req: ExtendedRequest, res: Response, next: NextFu
     } catch (err) {
         return next(err)
     }
-
 }
 
 const userController = {

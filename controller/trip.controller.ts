@@ -132,6 +132,7 @@ export const GetTrips = async (req: ExtendedRequest, res: Response, next: NextFu
     const trips = await prisma.trip.findMany({
         where: {
             user_id: user.id,
+            is_payment_confirmed: true
         },
         include: {
             service: true,
@@ -147,6 +148,7 @@ export const GetTrips = async (req: ExtendedRequest, res: Response, next: NextFu
     const customs = await prisma.customTrip.findMany({
         where: {
             user_id: user.id,
+            // is_payment_confirmed: true
         },
         include: {
             service: true,

@@ -23,6 +23,7 @@ import customtriprouter from './routes/customtrips.routes'
 import faqRouter from './routes/faq.routes'
 import forumRouter from './routes/forum.routes'
 import messageRouter from './routes/message.routes'
+import SuperAdminRouter from './routes/superadmin.routes'
 app.use(express.static('public'))
 app.use(express.json())
 // app.use(express.urlencoded({ extended: true }));
@@ -110,6 +111,8 @@ app.use('/faq', faqRouter)
 app.use("/forum", middleware.AuthMiddleware, forumRouter)
 //@ts-ignore
 app.use('/message', middleware.AuthMiddleware, messageRouter)
+// @ts-ignore
+app.use('/superAdmin', middleware.superAdminAuthMiddleware, SuperAdminRouter)
 
 cron.schedule('0 0 * * *', async () => {      
     console.log('Running your daily task...')

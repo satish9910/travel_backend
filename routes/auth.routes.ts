@@ -10,5 +10,6 @@ authRouter.post('/sendotp', authController.SendOtp)
 authRouter.post('/verify', authController.VerifyOtp)
 authRouter.post('/host-login', authController.HostLogin)
 authRouter.post('/social-login', authController.socialLogin)
+authRouter.post('/super-admin-login', authController.superAdminLogin)
 
 export default authRouter

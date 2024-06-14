@@ -70,7 +70,8 @@ export const CommentPost = async (req: ExtendedRequest, res: Response, next: Nex
                     user_id: req.user.id,
                 },
             })
-            const allComments = await prisma.comment.findMany({ where: { postId: post_id } })
+            const allComments = await prisma.comment.findMany({ where: { postId: post_id,
+             }, include: { user: { select: { id: true, username: true, image: true, status: true }}}})
             return res.status(200).send({ status: 201, message: 'Created', comment: commentEntry, comments: allComments})
         } catch (err) {
             return next(err)

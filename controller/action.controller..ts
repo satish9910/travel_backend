@@ -189,7 +189,8 @@ const sendFollowRequest = async (req: ExtendedRequest, res: Response, next: Next
         where: { user_id: user_id, follower_id: req.user.id, status: 0 },
     })
     if(isAlreadyRequested) {
-        return res.send({ status: 400, error: 'Bad Request', error_description: 'Already sent follow request' })
+        await prisma.followRequest.delete({ where: { id: isAlreadyRequested.id } })
+        return res.send({ status: 200, message: 'Follow request deleted' })
     }
     try {
         const entry = await prisma.followRequest.create({ data: { user_id: user_id, follower_id: req.user.id } })

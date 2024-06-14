@@ -18,7 +18,7 @@ model User {
   username         String?   @unique
   phone            String?   @unique
   password         String
-  email            String?  
+  email            String?   @unique
   image            String?
   background_image String?
   gender           Int? // 0 = female, 1 = male
@@ -349,19 +349,19 @@ model Message {
   conversation_id Int
   conversation    Conversation @relation(fields: [conversation_id], references: [id])
   sender          User         @relation("sender", fields: [user_id], references: [id])
-  receiver        User?         @relation("receiver", fields: [receiver_id], references: [id])
+  receiver        User?        @relation("receiver", fields: [receiver_id], references: [id])
   created_at      DateTime     @default(now())
   updated_at      DateTime     @updatedAt
 }
 
 model Conversation {
-  id           Int           @id @default(autoincrement())
+  id           Int              @id @default(autoincrement())
   name         String?
-  type         ConversationType  @default(ONE_ON_ONE)
+  type         ConversationType @default(ONE_ON_ONE)
   participants Participant[]
   messages     Message[]
-  created_at   DateTime      @default(now())
-  updated_at   DateTime      @updatedAt
+  created_at   DateTime         @default(now())
+  updated_at   DateTime         @updatedAt
 }
 
 model Participant {

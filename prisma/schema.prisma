@@ -333,7 +333,7 @@ model FollowRequest {
   user        User     @relation(name: "FollowRequestUser", fields: [user_id], references: [id])
   follower    User     @relation(name: "FollowRequestFollower", fields: [follower_id], references: [id])
   created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  updated_at  DateTime @updatedAt @default(now())
 }
 
 enum ConversationType {
@@ -351,7 +351,7 @@ model Message {
   sender          User         @relation("sender", fields: [user_id], references: [id])
   receiver        User?        @relation("receiver", fields: [receiver_id], references: [id])
   created_at      DateTime     @default(now())
-  updated_at      DateTime     @updatedAt
+  updated_at      DateTime     @updatedAt @default(now())
 }
 
 model Conversation {
@@ -361,7 +361,7 @@ model Conversation {
   participants Participant[]
   messages     Message[]
   created_at   DateTime         @default(now())
-  updated_at   DateTime         @updatedAt
+  updated_at   DateTime         @updatedAt @default(now())
 }
 
 model Participant {

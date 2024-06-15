@@ -257,10 +257,19 @@ export const getAllConversations = async (req: ExtendedRequest, res: Response, n
             },
             select: {
                 userId: true,
+                conversationId: true,
             },
         });
-        let participantIds = participants.map((participant) => participant.userId);
-        return res.status(200).send({ conversations, participants_id: participantIds });
+        conversations = conversations.map((conversation) => {
+            const conversationParticipants = participants.filter((participant) => participant.conversationId === conversation.id);
+            const participantIds = conversationParticipants.map((participant) => participant.userId);
+            return {
+                ...conversation,
+                participants_id: participantIds,
+            };
+        });
+
+        return res.status(200).send({ conversations: conversations });
     } catch (err) {
         return res.status(500).send({ message: 'Error getting conversations' })
     }

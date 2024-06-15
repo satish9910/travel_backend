@@ -248,7 +248,19 @@ export const getAllConversations = async (req: ExtendedRequest, res: Response, n
             where: { participants: { some: { user: { id: senderId } } } },
             include: { messages: true, participants: {select: {user: {select: {username: true, image: true, id: true}}}}},
         })
-        return res.status(200).send({ conversations })
+        let conversationIds = conversations.map((conversation) => conversation.id);
+        let participants = await prisma.participant.findMany({
+            where: {
+                conversationId: {
+                    in: conversationIds,
+                },
+            },
+            select: {
+                userId: true,
+            },
+        });
+        let participantIds = participants.map((participant) => participant.userId);
+        return res.status(200).send({ conversations, participants_id: participantIds });
     } catch (err) {
         return res.status(500).send({ message: 'Error getting conversations' })
     }

@@ -1,6 +1,6 @@
 import { NextFunction, Response } from 'express'
 import { ExtendedRequest } from '../utils/middleware'
-import { getReceiverSocketId, io } from '../app'
+import { io } from '../app'
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
@@ -115,7 +115,7 @@ export const sendGroupMessage = async (req: ExtendedRequest, res: Response, next
                 }
             })
         }
-        io.emit("newGroupMessage", { message: newMessage })
+        io.emit("newMessage", { message: newMessage })
         return res.status(200).send({ message: 'Message sent' })
     }catch(err){
         return res.status(500).send({ message: 'Error sending message' })
@@ -212,35 +212,6 @@ export const getConversation = async (req: ExtendedRequest, res: Response, next:
     }
 }
 
-// export const getConvoByConvoId = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-//     try {
-//         const senderId = req.user.id
-//         const conversationId = req.params.conversationId
-
-//         const getConversation = await prisma.conversation.findFirst({
-//             where: {
-//                 id: Number(conversationId),
-//                 participants: {
-//                     some: {
-//                         userId: senderId,
-//                     },
-//                 },
-//             },
-//             include: { messages: true, participants: {
-//                 select: {
-//                     user: { select: { username: true, image: true, id: true } },
-//                 }
-//             } },
-//         })
-
-//         if (!getConversation) return res.status(404).send({ message: 'No conversation found' })
-//         return res.status(200).send({ conversation: getConversation })
-//     } catch (err) {
-//         return res.status(500).send({ message: 'Error getting conversation' })
-//     }
-
-// }
-
 export const getAllConversations = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const senderId = req.user.id
@@ -275,5 +246,5 @@ export const getAllConversations = async (req: ExtendedRequest, res: Response, n
     }
 }
 
-const messageController = { sendMessage, getConversation, getAllConversations, createGroup, sendGroupMessage,addParticipantsToGroup }
+const messageController = { sendMessage, getConversation, getAllConversations, createGroup, sendGroupMessage, addParticipantsToGroup }
 export default messageController

@@ -104,7 +104,7 @@ export const createCustomService = async (req: ExtendedRequest, res: Response, n
         ////add the other things
         return res
             .status(400)
-            .send({ error: 'Invalid payload', error_description: 'service_id, custom_trip_id is required.' })
+            .send({ error: 'Invalid payload', error_description: 'name, custom_trip_id is required.' })
     }
     const {
         name,

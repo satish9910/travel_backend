@@ -54,9 +54,21 @@ export const GetOnlyVideos = async (req: ExtendedRequest, res: Response, _next: 
                         id: true,
                         username: true,
                         image: true,
+                        status: true
                     },
                 },
-                comment: true,
+                comment: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                username: true,
+                                image: true,
+                                status: true,
+                            }
+                        }
+                    }
+                },
             },
             orderBy: { created_at: 'desc' },
             skip: skip,

@@ -40,5 +40,25 @@ const getAllVendors = async (req: ExtendedRequest, res: Response, next: NextFunc
     }
 }
 
-const superAdminController = { getAllUsers, getAllVendors, createVendor }
+export const hostServices = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const host_id = req.params.id
+    if (isNaN(Number(host_id))) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'Invalid Query Parameters' })
+    }
+    try {
+        const services = await prisma.service.findMany({
+            where: {
+                host_id: { equals: Number(host_id) },
+                type: { not: 2 }
+            },
+        })
+        return res.status(200).send({ status: 200, message: 'Ok', services: services, count: services.length })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const superAdminController = { getAllUsers, getAllVendors, createVendor, hostServices }
 export default superAdminController

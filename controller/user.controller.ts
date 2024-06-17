@@ -513,7 +513,9 @@ const getNearbyUsers = async (req: ExtendedRequest, res: Response, next: NextFun
                 username: true,
                 image: true,
                 latitude: true,
-                longitude: true
+                longitude: true,
+                gender: true,
+                status: true
             }
         });
         

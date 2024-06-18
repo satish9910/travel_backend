@@ -12,6 +12,8 @@ SuperAdminRouter
     .post('/vendor', superAdminController.createVendor)
     //@ts-ignore
     .get('/vendor-services/:host_id', superAdminController.hostServices)
+    //@ts-ignore
+    .get('/vendor-trips/:host_id', superAdminController.hostTrips)
     
 
 export default SuperAdminRouter

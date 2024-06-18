@@ -61,5 +61,26 @@ export const hostServices = async (req: ExtendedRequest, res: Response, next: Ne
     }
 }
 
-const superAdminController = { getAllUsers, getAllVendors, createVendor, hostServices }
+export const hostTrips = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const host_id = req.params.host_id
+    
+    if (isNaN(Number(host_id))) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'Invalid Query Parameters' })
+    }
+    try {
+        const trips = await prisma.trip.findMany({
+            where: {
+                host_id: { equals: Number(host_id) },
+            },
+        })
+        return res.status(200).send({ status: 200, message: 'Ok', trips: trips, count: trips.length })
+    } catch (err) {
+        return next(err)
+    }
+
+}
+
+const superAdminController = { getAllUsers, getAllVendors, createVendor, hostServices, hostTrips }
 export default superAdminController

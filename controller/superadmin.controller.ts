@@ -74,6 +74,10 @@ export const hostTrips = async (req: ExtendedRequest, res: Response, next: NextF
             where: {
                 host_id: { equals: Number(host_id) },
             },
+            include: {
+                user: true,
+                service: true,
+            }
         })
         return res.status(200).send({ status: 200, message: 'Ok', trips: trips, count: trips.length })
     } catch (err) {

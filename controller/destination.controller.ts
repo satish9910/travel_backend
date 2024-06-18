@@ -20,7 +20,9 @@ export const createDestination = async (req: ExtendedRequest, res: Response, nex
             pincode: body.pincode,
             image: body.image,
             features: body.features,
-            customise_options: body.customise_options
+            customise_options: body.customise_options,
+            latitude: body.latitude,
+            longitude: body.longitude,
         },
     })
     return res.status(200).send({ status: 201, message: 'Created', destination: destination })

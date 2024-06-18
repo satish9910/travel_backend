@@ -282,8 +282,6 @@ const uploadServicePics = async (req: ExtendedRequest, res: Response, next: Next
         let serviceId: string | number = req.params.id
         
         const files = req.body
-        console.log(files);
-        
         
         if (!serviceId) {
             return res

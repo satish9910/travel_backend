@@ -208,22 +208,23 @@ model Trip {
 }
 
 model CustomTrip {
-  id               Int       @id @default(autoincrement())
-  user_id          Int
-  number_of_people Int
-  start_date       String
-  end_date         String
-  duration         Int
-  itinerary        Json
-  service_id       Int?
-  cost             Int?
-  host_id          Int?
-  cancelled        Boolean   @default(false)
-  status           String    @default("upcoming")
-  booked           Boolean   @default(false)
-  isBookmarked     Boolean   @default(false)
-  expense          Expense[]
-  host             Host?     @relation(fields: [host_id], references: [id])
+  id                   Int       @id @default(autoincrement())
+  user_id              Int
+  number_of_people     Int
+  start_date           String
+  end_date             String
+  duration             Int
+  itinerary            Json
+  service_id           Int?
+  cost                 Int?
+  host_id              Int?
+  is_payment_confirmed Boolean   @default(false)
+  cancelled            Boolean   @default(false)
+  status               String    @default("upcoming")
+  booked               Boolean   @default(false)
+  isBookmarked         Boolean   @default(false)
+  expense              Expense[]
+  host                 Host?     @relation(fields: [host_id], references: [id])
 
   service    Service? @relation(fields: [service_id], references: [id], onDelete: SetNull)
   user       User     @relation(fields: [user_id], references: [id])

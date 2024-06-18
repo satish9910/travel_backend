@@ -64,10 +64,7 @@ const updateHostProfile = async (req: ExtendedRequest, res: Response, next: Next
             .status(200)
             .send({ status: 400, error: 'Invalid payload', error_description: 'id(host) is required in params.' })
     }
-    // let imageUrl: string | undefined
-    // if (req.file?.filename) {
-    //     imageUrl = helper.imageUrlGen(req.file.filename)
-    // }
+
     const host = await prisma.host.update({ where: { id: Number(hostId) }, data: { ...req.body, photo: imageUrl } })
     return res.status(200).send({ status: 200, host })
 }

@@ -18,4 +18,6 @@ customRouter.post('/service', middleware.HostAuthMiddleware, customTripControlle
 customRouter.get('/bids/:id', middleware.AuthMiddleware, customTripController.getBids)
 //@ts-ignore
 customRouter.post('/bid/accept', middleware.AuthMiddleware, customTripController.acceptBid)
+//@ts-ignore
+customRouter.post("/verify", middleware.AuthMiddleware, customTripController.CustomTripPaymentVerification)
 export default customRouter

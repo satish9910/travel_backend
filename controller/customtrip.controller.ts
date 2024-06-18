@@ -3,6 +3,13 @@ import helper from '../utils/helpers'
 import { ExtendedRequest } from '../utils/middleware'
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
+import Razorpay from 'razorpay'
+import crypto from 'node:crypto'
+
+const razorpayInstance = new Razorpay({
+    key_id: process.env.KEY_ID!,
+    key_secret: process.env.KEY_SECRET!,
+})
 
 export const InitialiseCustomTrip = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
@@ -238,7 +245,7 @@ export const acceptBid = async (req: ExtendedRequest, res: Response, next: NextF
             })
         }
         await prisma.service.update({ where: { id: service_id }, data: { status: 1 } })
-        await prisma.customTrip.update({
+        const trip = await prisma.customTrip.update({
             where: { id: service.custom_trip_id },
             data: {
                 booked: true,
@@ -247,9 +254,53 @@ export const acceptBid = async (req: ExtendedRequest, res: Response, next: NextF
                 cost: service.price,
             },
         })
-        return res.status(200).send({ status: 200, message: 'booked', service: service })
+        const order = await razorpayInstance.orders.create({
+            amount: body.cost,
+            currency: 'INR',
+        })
+        return res.status(200).send({ status: 200, message: 'accepted', trip: trip, gateways: { order_id: order.id, amount: order.amount, currency: order.currency } })
     } catch (err) {
         next(err)
+    }
+}
+
+export const CustomTripPaymentVerification = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const body = req.body
+
+    if (!body)
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'paymentId, orderId is required.' })
+
+    const { paymentId, orderId, tripId } = body
+    if (!paymentId || !orderId || !tripId || Number.isNaN(Number(tripId))) {
+        return res
+            .status(200)
+            .send({
+                status: 400,
+                error: 'Invalid payload',
+                error_description: 'paymentId, orderId ,tripId is required.',
+            })
+    }
+    const razorpay_signature = req.headers['x-razorpay-signature']
+    if (!razorpay_signature) return res.status(200).send({ status: 400, message: 'x-razorpay-signature' })
+    let sha256 = crypto.createHmac('sha256', process.env.KEY_SECRET!)
+    sha256.update(orderId + '|' + paymentId)
+
+    const generated_signature = sha256.digest('hex')
+    if (generated_signature === razorpay_signature) {
+        const updatedTrip = await prisma.customTrip.update({
+            where: { id: Number(tripId) },
+            data: {
+                is_payment_confirmed: true,
+            },
+        })
+        return res.send({ status: 200, message: 'Payment confirmed.', trip: updatedTrip })
+    } else {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'incorrect payload', error_description: "payment couldn't be verified." })
     }
 }
 
@@ -261,6 +312,7 @@ const customTripController = {
     createCustomService,
     getBids,
     acceptBid,
+    CustomTripPaymentVerification
 }
 
 export default customTripController

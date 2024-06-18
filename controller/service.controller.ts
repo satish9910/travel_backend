@@ -280,8 +280,8 @@ const editServiceById = async (req: ExtendedRequest, res: Response, next: NextFu
 const uploadServicePics = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         let serviceId: string | number = req.params.id
-        const files = req.files
-
+        const files = req.body.imageUrls
+        
         if (!serviceId) {
             return res
                 .status(200)
@@ -297,12 +297,11 @@ const uploadServicePics = async (req: ExtendedRequest, res: Response, next: Next
                 .status(200)
                 .send({ status: 400, error: 'Invalid payload', error_description: 'Maximum 5 files are allowed.' })
         }
-        const images = files.map((file: any) => helper.imageUrlGen(file.filename))
 
         const service = await prisma.service.update({
             where: { id: Number(serviceId) },
             data: {
-                images: images,
+                images: files
             },
         })
         return res.status(200).send({ status: 200, message: 'Pictures uploaded', service })

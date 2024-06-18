@@ -23,6 +23,6 @@ ServiceRouter
     //@ts-ignore
     .delete('/:id', middleware.HostAuthMiddleware, serviceController.deleteService)
     //@ts-ignore
-    .put('/servicePics/:id', middleware.HostAuthMiddleware, upload.array('files', 10), serviceController.uploadServicePics)
+    .put('/servicePics/:id', middleware.HostAuthMiddleware, serviceController.uploadServicePics)
 
 export default ServiceRouter

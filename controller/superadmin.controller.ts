@@ -41,7 +41,8 @@ const getAllVendors = async (req: ExtendedRequest, res: Response, next: NextFunc
 }
 
 export const hostServices = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-    const host_id = req.body.host_id
+    const host_id = req.params.host_id
+    
     if (isNaN(Number(host_id))) {
         return res
             .status(200)

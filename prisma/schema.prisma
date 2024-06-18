@@ -256,6 +256,8 @@ model Destination {
   image             String?
   features          Json?
   customise_options Json?
+  latitude          Float?
+  longitude         Float?
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
 }

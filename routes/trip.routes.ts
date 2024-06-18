@@ -14,7 +14,8 @@ TripRouter
     .get('/:id', tripController.GetSpecificTrip)
     //@ts-ignore
     .put('/:id', tripController.cancelTrip)
-
+    //@ts-ignore
+    .get('/locations', tripController.getLocations)
 export default TripRouter
 
 

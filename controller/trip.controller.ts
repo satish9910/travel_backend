@@ -24,23 +24,19 @@ export const CreateTrip = async (req: ExtendedRequest, res: Response, next: Next
             .send({ status: 404, error: 'Service not found', error_description: 'Service not found for the given id.' })
     }
     if (!helper.isValidatePaylod(body, ['destination', 'start_date', 'number_of_people', 'service_id', 'cost'])) {
-        return res
-            .status(200)
-            .send({
-                status: 200,
-                error: 'Invalid payload',
-                error_description: 'destination, start_date, end_date is required.',
-            })
+        return res.status(200).send({
+            status: 200,
+            error: 'Invalid payload',
+            error_description: 'destination, start_date, end_date is required.',
+        })
     }
     if (service.type === 1) {
         if (service.available_seats !== null && service.available_seats < body.number_of_people) {
-            return res
-                .status(200)
-                .send({
-                    status: 400,
-                    error: 'Not enough seats',
-                    error_description: 'Service does not have enough seats.',
-                })
+            return res.status(200).send({
+                status: 400,
+                error: 'Not enough seats',
+                error_description: 'Service does not have enough seats.',
+            })
         }
         await prisma.service.update({
             where: { id: body.service_id },
@@ -68,22 +64,18 @@ export const CreateTrip = async (req: ExtendedRequest, res: Response, next: Next
             amount: body.cost,
             currency: 'INR',
         })
-        return res
-            .status(200)
-            .send({
-                status: 201,
-                message: 'Created',
-                trip: trip,
-                gateways: { order_id: order.id, amount: order.amount, currency: order.currency },
-            })
+        return res.status(200).send({
+            status: 201,
+            message: 'Created',
+            trip: trip,
+            gateways: { order_id: order.id, amount: order.amount, currency: order.currency },
+        })
     } catch (err) {
-        return res
-            .status(200)
-            .send({
-                status: 500,
-                error: 'orderId or trip creation failed.',
-                error_description: (err as Error)?.message,
-            })
+        return res.status(200).send({
+            status: 500,
+            error: 'orderId or trip creation failed.',
+            error_description: (err as Error)?.message,
+        })
     }
 }
 
@@ -98,13 +90,11 @@ export const PaymentVerification = async (req: ExtendedRequest, res: Response, n
 
     const { paymentId, orderId, tripId } = body
     if (!paymentId || !orderId || !tripId || Number.isNaN(Number(tripId))) {
-        return res
-            .status(200)
-            .send({
-                status: 400,
-                error: 'Invalid payload',
-                error_description: 'paymentId, orderId ,tripId is required.',
-            })
+        return res.status(200).send({
+            status: 400,
+            error: 'Invalid payload',
+            error_description: 'paymentId, orderId ,tripId is required.',
+        })
     }
     const razorpay_signature = req.headers['x-razorpay-signature']
     if (!razorpay_signature) return res.status(200).send({ status: 400, message: 'x-razorpay-signature' })
@@ -132,7 +122,7 @@ export const GetTrips = async (req: ExtendedRequest, res: Response, next: NextFu
     const trips = await prisma.trip.findMany({
         where: {
             user_id: user.id,
-            is_payment_confirmed: true
+            is_payment_confirmed: true,
         },
         include: {
             service: true,
@@ -148,7 +138,7 @@ export const GetTrips = async (req: ExtendedRequest, res: Response, next: NextFu
     const customs = await prisma.customTrip.findMany({
         where: {
             user_id: user.id,
-            // is_payment_confirmed: true
+            is_payment_confirmed: true,
         },
         include: {
             service: true,
@@ -218,7 +208,7 @@ export const GetSpecificTrip = async (req: ExtendedRequest, res: Response, next:
     return res.status(200).send({ status: 200, message: 'Ok', trip })
 }
 
-//todo payment return 
+//todo payment return
 export const cancelTrip = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const tripId = req.params.id
@@ -237,13 +227,11 @@ export const cancelTrip = async (req: ExtendedRequest, res: Response, next: Next
             .send({ status: 403, error: 'Forbidden', error_description: 'You are not allowed to cancel this trip.' })
     }
     if (!trip.is_payment_confirmed) {
-        return res
-            .status(200)
-            .send({
-                status: 403,
-                error: 'Forbidden',
-                error_description: 'Payment is not done for this trip in the first place.',
-            })
+        return res.status(200).send({
+            status: 403,
+            error: 'Forbidden',
+            error_description: 'Payment is not done for this trip in the first place.',
+        })
     }
     const deletedTrip = await prisma.trip.update({
         where: { id: Number(tripId) },
@@ -253,5 +241,21 @@ export const cancelTrip = async (req: ExtendedRequest, res: Response, next: Next
     return res.status(200).send({ status: 200, message: 'Trip cancelled.', trip: deletedTrip })
 }
 
-const tripController = { CreateTrip, GetTrips, GetSpecificTrip, PaymentVerification, cancelTrip }
+const getLocations = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const trips = await prisma.trip.findMany({
+        where: {
+            user_id: user.id,
+            is_payment_confirmed: true,
+        },
+    })
+    const tripLocations = await Promise.all(trips.map(async (trip) => {
+        const destination = trip.destination;
+        const location = await prisma.destination.findFirst({ where: { destination: destination } });
+        return { tripId: trip.id, destination: trip.destination, latitude: location?.latitude, longitude: location?.longitude };
+    }));
+    return res.status(200).send({ status: 200, locations: tripLocations });
+}
+
+const tripController = { CreateTrip, GetTrips, GetSpecificTrip, PaymentVerification, cancelTrip, getLocations }
 export default tripController

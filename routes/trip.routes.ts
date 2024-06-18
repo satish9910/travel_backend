@@ -15,7 +15,7 @@ TripRouter
     //@ts-ignore
     .put('/:id', tripController.cancelTrip)
     //@ts-ignore
-    .get('/locations', tripController.getLocations)
+    .get('/all/locations', tripController.getLocations)
 export default TripRouter
 
 

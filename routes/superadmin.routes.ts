@@ -15,7 +15,7 @@ SuperAdminRouter
     //@ts-ignore
     .get('/vendor-trips/:host_id', superAdminController.hostTrips)
     //@ts-ignore
-    .get('/user-trips/:host_id', superAdminController.userTrips)
+    .get('/user-trips/:user_id', superAdminController.userTrips)
     
 
 export default SuperAdminRouter

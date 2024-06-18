@@ -255,7 +255,7 @@ export const acceptBid = async (req: ExtendedRequest, res: Response, next: NextF
             },
         })
         const order = await razorpayInstance.orders.create({
-            amount: service.price,
+            amount: service.price * 100,
             currency: 'INR',
         })
         return res.status(200).send({ status: 200, message: 'accepted', trip: trip, gateways: { order_id: order.id, amount: order.amount, currency: order.currency } })

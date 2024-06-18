@@ -280,7 +280,11 @@ const editServiceById = async (req: ExtendedRequest, res: Response, next: NextFu
 const uploadServicePics = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         let serviceId: string | number = req.params.id
+        console.log(req.body);
+        
         const files = req.body.imageUrls
+        console.log(files);
+        
         
         if (!serviceId) {
             return res

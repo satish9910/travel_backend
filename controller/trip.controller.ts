@@ -261,14 +261,22 @@ const getLocations = async (req: ExtendedRequest, res: Response, next: NextFunct
         },
     })
     const customTripLocations = await Promise.all(customTrips.map(async (trip) => {
-        const itinerary = Array(trip.itinerary);
-        itinerary.forEach(async (itineraryItem) => {
-            console.log(itineraryItem);
-            
-        })
-    }))
+        const itinerary = Array.isArray(trip.itinerary) ? trip.itinerary : [];
+        if (itinerary) {
+            const locations = await Promise.all(itinerary.map(async (item) => {
+                //@ts-ignore
+                const destination = item?.destination;
+                const location = await prisma.destination.findFirst({ where: { destination: destination } });
+                return { location: destination, latitude: location?.latitude, longitude: location?.longitude, image: location?.image };
+            }));
+            return { tripId: trip.id, tripStatus: trip.status, destination: locations };
+        }
+        return { tripId: trip.id, tripStatus: trip.status, destination: [] };
+    }));
+
+    const merged = [...tripLocations, ...customTripLocations];
     
-    return res.status(200).send({ status: 200, locations: tripLocations });
+    return res.status(200).send({ status: 200, locations: merged });
 }
 
 const tripController = { CreateTrip, GetTrips, GetSpecificTrip, PaymentVerification, cancelTrip, getLocations }

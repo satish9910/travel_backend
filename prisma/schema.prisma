@@ -97,19 +97,19 @@ model Otp {
 }
 
 model Post {
-  id          Int       @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   image       String
   description String?
-  media_type  MediaType @default(IMAGE)
-  likes       Int       @default(0)
+  media_type  MediaType    @default(IMAGE)
+  likes       Int          @default(0)
   comment     Comment[]
   user_id     Int
-  user        User      @relation(fields: [user_id], references: [id])
+  user        User         @relation(fields: [user_id], references: [id])
   latitude    String?
   longitude   String?
   place       String?
   thumbnail   String?
-  reports     Int       @default(0)
+  postReport  PostReport[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -306,7 +306,7 @@ model ForumQuestion {
   user_id    Int
   user       User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
   likes      QLikes[]
-  reports    Int           @default(0)
+  forumReport forumReport[]
   created_at DateTime      @default(now())
   updated_at DateTime      @updatedAt
 }
@@ -395,4 +395,21 @@ model PinnedLocation {
   title      String?
   user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   created_at DateTime @default(now())
+}
+
+model PostReport {
+  id         Int      @id @default(autoincrement())
+  post_id    Int
+  user_id    Int
+  post       Post     @relation(fields: [post_id], references: [id])
+  created_at DateTime @default(now())
+}
+
+model forumReport {
+  id         Int           @id @default(autoincrement())
+  question_id Int
+  user_id     Int
+  question    ForumQuestion @relation(fields: [question_id], references: [id])
+
+  createdAt DateTime @default(now())
 }

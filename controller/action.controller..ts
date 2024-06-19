@@ -70,9 +70,13 @@ export const CommentPost = async (req: ExtendedRequest, res: Response, next: Nex
                     user_id: req.user.id,
                 },
             })
-            const allComments = await prisma.comment.findMany({ where: { postId: post_id,
-             }, include: { user: { select: { id: true, username: true, image: true, status: true }}}})
-            return res.status(200).send({ status: 201, message: 'Created', comment: commentEntry, comments: allComments})
+            const allComments = await prisma.comment.findMany({
+                where: { postId: post_id },
+                include: { user: { select: { id: true, username: true, image: true, status: true } } },
+            })
+            return res
+                .status(200)
+                .send({ status: 201, message: 'Created', comment: commentEntry, comments: allComments })
         } catch (err) {
             return next(err)
         }
@@ -150,9 +154,7 @@ const unfollowUser = async (req: ExtendedRequest, res: Response, next: NextFunct
         where: { user_id: user_id, follower_id: req.user.id },
     })
     if (!isAlreadyFollowing) {
-        return res
-            .status(200)
-            .send({ status: 400, error: 'Bad Request', error_description: 'Not following this user' })
+        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Not following this user' })
     }
     try {
         const follow = await prisma.follows.deleteMany({ where: { user_id: user_id, follower_id: req.user.id } })
@@ -160,7 +162,6 @@ const unfollowUser = async (req: ExtendedRequest, res: Response, next: NextFunct
     } catch (err) {
         return next(err)
     }
-
 }
 
 const sendFollowRequest = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
@@ -188,7 +189,7 @@ const sendFollowRequest = async (req: ExtendedRequest, res: Response, next: Next
     const isAlreadyRequested = await prisma.followRequest.findFirst({
         where: { user_id: user_id, follower_id: req.user.id, status: 0 },
     })
-    if(isAlreadyRequested) {
+    if (isAlreadyRequested) {
         await prisma.followRequest.delete({ where: { id: isAlreadyRequested.id } })
         return res.send({ status: 200, message: 'Follow request deleted' })
     }
@@ -203,9 +204,11 @@ const sendFollowRequest = async (req: ExtendedRequest, res: Response, next: Next
 const getFollowRequests = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const followRequests = await prisma.followRequest.findMany({
         where: { user_id: req.user.id, status: 0 },
-        include: { follower: {
-            select: { id: true, username: true, image: true },
-        } },
+        include: {
+            follower: {
+                select: { id: true, username: true, image: true },
+            },
+        },
     })
     return res.status(200).send({ status: 200, message: 'Ok', followRequests: followRequests })
 }
@@ -290,12 +293,26 @@ const reportPost = async (req: ExtendedRequest, res: Response, next: NextFunctio
         return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Post not found.' })
     }
     try {
-        const post = await prisma.post.update({ where: { id: post_id }, data: { reports: { increment: 1 } } })
-        return res.status(200).send({ status: 200, message: 'Post reported', post: post })
+        const totalReports = await prisma.postReport.count({ where: { post_id: post_id } })
+        if (totalReports > 4) {
+            await prisma.post.delete({ where: { id: post_id } })
+            return res.status(200).send({ status: 200, message: 'Post deleted', post_id: post_id })
+        }
     } catch (err) {
         return next(err)
     }
-
+    try {
+        const alreadyReported = await prisma.postReport.findFirst({ where: { post_id: post_id, user_id: req.user.id } })
+        if (alreadyReported) {
+            return res
+                .status(200)
+                .send({ status: 400, error: 'Bad Request', error_description: 'Already reported this post' })
+        }
+        const entry = await prisma.postReport.create({ data: { post_id: post_id, user_id: req.user.id } })
+        return res.status(200).send({ status: 200, message: 'Ok', report: entry })
+    } catch (err) {
+        return next(err)
+    }
 }
 
 const reportForumQuestion = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
@@ -317,13 +334,39 @@ const reportForumQuestion = async (req: ExtendedRequest, res: Response, next: Ne
         return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Question not found.' })
     }
     try {
-        const question = await prisma.forumQuestion.update({ where: { id: question_id }, data: { reports: { increment: 1 } } })
-        return res.status(200).send({ status: 200, message: 'Question reported', question: question })
+        const totalReports = await prisma.forumReport.count({ where: { question_id: question_id } })
+        if (totalReports > 4) {
+            await prisma.forumQuestion.delete({ where: { id: question_id } })
+            return res.status(200).send({ status: 200, message: 'Forum deleted', forum_id: question_id })
+        }
     } catch (err) {
         return next(err)
     }
-
+    try {
+        const alreadyReported = await prisma.forumQuestion.findFirst({
+            where: { id: question_id, user_id: req.user.id },
+        })
+        if (alreadyReported) {
+            return res
+                .status(200)
+                .send({ status: 400, error: 'Bad Request', error_description: 'Already reported this question' })
+        }
+        const entry = await prisma.forumReport.create({ data: { question_id: question_id, user_id: req.user.id } })
+        return res.status(200).send({ status: 200, message: 'Ok', report: entry })
+    } catch (err) {
+        return next(err)
+    }
 }
 
-const actionController = { LikePost, CommentPost, Follows, sendFollowRequest, getFollowRequests, rejectFollowRequest, acceptFollowRequest, unfollowUser, reportPost, reportForumQuestion}
+const actionController = {
+    LikePost,
+    CommentPost,
+    Follows,
+    sendFollowRequest,
+    getFollowRequests,
+    rejectFollowRequest,
+    acceptFollowRequest,
+    unfollowUser,
+    reportPost,
+}
 export default actionController

@@ -138,7 +138,7 @@ export const GetTrips = async (req: ExtendedRequest, res: Response, next: NextFu
     const customs = await prisma.customTrip.findMany({
         where: {
             user_id: user.id,
-            is_payment_confirmed: true,
+            // is_payment_confirmed: true,
         },
         include: {
             service: true,
@@ -252,8 +252,19 @@ const getLocations = async (req: ExtendedRequest, res: Response, next: NextFunct
     const tripLocations = await Promise.all(trips.map(async (trip) => {
         const destination = trip.destination;
         const location = await prisma.destination.findFirst({ where: { destination: destination } });
-        return { tripId: trip.id, destination: trip.destination, latitude: location?.latitude, longitude: location?.longitude };
+        return { tripId: trip.id, destination: [trip.destination, location?.latitude, location?.longitude] };
     }));
+    const customTrips = await prisma.customTrip.findMany({
+        where: {
+            user_id: user.id,
+            is_payment_confirmed: true,
+        },
+    })
+    // const customTripLocations = await Promise.all(customTrips.map(async (trip) => {
+    //     const destination = trip.itinerary[0].destination;
+    //     const location = await prisma.destination.findFirst({ where: { destination: destination } });
+    //     return { tripId: trip.id, destination: [trip.destination, location?.latitude, location?.longitude] };
+    // }));
     return res.status(200).send({ status: 200, locations: tripLocations });
 }
 

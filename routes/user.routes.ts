@@ -49,5 +49,9 @@ userRouter
     .post('/kyc', userController.submitKycDetails)
     //@ts-ignore
     .post('/followStatus', userController.getFollowStatus)
+    //@ts-ignore
+    .post('/pin', userController.pinLocation)
+    //@ts-ignore
+    .delete('/pin/:id', userController.deletePinnedLocation)
 
 export default userRouter

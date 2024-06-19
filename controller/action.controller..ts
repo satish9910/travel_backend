@@ -368,5 +368,6 @@ const actionController = {
     acceptFollowRequest,
     unfollowUser,
     reportPost,
+    reportForumQuestion
 }
 export default actionController

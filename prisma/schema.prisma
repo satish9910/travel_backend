@@ -305,6 +305,9 @@ model ForumQuestion {
   answers    ForumAnswer[] @relation("QuestionToAnswer")
   user_id    Int
   user       User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  location  String?
+  latitude  Float?
+  longitude Float?
   likes      QLikes[]
   forumReport forumReport[]
   created_at DateTime      @default(now())

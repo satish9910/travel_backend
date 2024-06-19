@@ -6,14 +6,12 @@ const prisma = new PrismaClient()
 
 const createForumQuestion = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
-
     const body = req.body
-
     try {
         if (!helper.isValidatePaylod(body, ['question'])) {
             return res.status(200).send({ error: 'Invalid payload', error_description: 'question is required.' })
         }
-        const forumQuestion = await prisma.forumQuestion.create({ data: { question: body.question, user: { connect: { id: user.id, username: user.username, image: user.image } } } })
+        const forumQuestion = await prisma.forumQuestion.create({ data: { question: body.question, location: body.location, latitude: body.latitude, longitude: body.longitude, user: { connect: { id: user.id, username: user.username, image: user.image } } } })
         return res.status(200).send({ message: 'forum question created', forumQuestion })
     } catch (err) {
         return next(err)

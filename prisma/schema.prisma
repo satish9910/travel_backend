@@ -55,7 +55,7 @@ model User {
   receiver        Message[]       @relation("receiver")
   participated    Participant[]
   kyc             KYC?
-  kycStatus       Int?            @default(0) // 0 = pending, 1 = accepted, 2 = rejected
+  kycStatus       Int?            @default(-1) // -1 = not submitted, 0 = pending, 1 = accepted, 2 = rejected
 }
 
 model KYC {
@@ -122,7 +122,7 @@ model Comment {
   id         Int      @id @default(autoincrement())
   comment    String
   postId     Int
-  Post       Post     @relation(fields: [postId], references: [id])
+  Post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   user_id    Int
   user       User     @relation(fields: [user_id], references: [id])
   created_at DateTime @default(now())
@@ -134,7 +134,7 @@ model Likes {
   post_id Int
   user_id Int
 
-  Post Post @relation(fields: [post_id], references: [id])
+  Post Post @relation(fields: [post_id], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

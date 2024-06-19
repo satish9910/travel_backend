@@ -710,6 +710,12 @@ const getFollowStatus = async (req: ExtendedRequest, res: Response, next: NextFu
     }
 }
 
+const getPinnedLocations = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const pinnedLocations = await prisma.pinnedLocation.findMany({where: {user_id: user.id}});
+    return res.status(200).json({status: 200, message: 'Ok', pinnedLocations: pinnedLocations});
+}
+
 const pinLocation = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const { latitude, longitude, title } = req.body
@@ -771,6 +777,7 @@ const userController = {
     getUserFollowersFollowingById,
     submitKycDetails,
     getFollowStatus,
+    getPinnedLocations,
     pinLocation,
     deletePinnedLocation
 }

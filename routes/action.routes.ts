@@ -21,5 +21,9 @@ actionRouter
     .put("/request/reject", actionController.rejectFollowRequest)
     //@ts-ignore
     .post('/unfollow', actionController.unfollowUser)
+    //@ts-ignore
+    .post('/report-post', actionController.reportPost)
+    //@ts-ignore
+    .post('/report-forum', actionController.reportForumQuestion)
 
 export default actionRouter

@@ -271,5 +271,59 @@ const acceptFollowRequest = async (req: ExtendedRequest, res: Response, next: Ne
     }
 }
 
-const actionController = { LikePost, CommentPost, Follows, sendFollowRequest, getFollowRequests, rejectFollowRequest, acceptFollowRequest, unfollowUser}
+const reportPost = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const body = req.body
+    if (!helper.isValidatePaylod(body, ['post_id'])) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'post_id is required.' })
+    }
+    let { post_id } = req.body
+    if (Number.isNaN(Number(post_id))) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'post_id should be a number.' })
+    }
+    post_id = Number(post_id)
+    const post = await prisma.post.findFirst({ where: { id: post_id } })
+    if (!post) {
+        return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Post not found.' })
+    }
+    try {
+        const post = await prisma.post.update({ where: { id: post_id }, data: { reports: { increment: 1 } } })
+        return res.status(200).send({ status: 200, message: 'Post reported', post: post })
+    } catch (err) {
+        return next(err)
+    }
+
+}
+
+const reportForumQuestion = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const body = req.body
+    if (!helper.isValidatePaylod(body, ['question_id'])) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'question_id is required.' })
+    }
+    let { question_id } = req.body
+    if (Number.isNaN(Number(question_id))) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Invalid payload', error_description: 'question_id should be a number.' })
+    }
+    question_id = Number(question_id)
+    const question = await prisma.forumQuestion.findFirst({ where: { id: question_id } })
+    if (!question) {
+        return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Question not found.' })
+    }
+    try {
+        const question = await prisma.forumQuestion.update({ where: { id: question_id }, data: { reports: { increment: 1 } } })
+        return res.status(200).send({ status: 200, message: 'Question reported', question: question })
+    } catch (err) {
+        return next(err)
+    }
+
+}
+
+const actionController = { LikePost, CommentPost, Follows, sendFollowRequest, getFollowRequests, rejectFollowRequest, acceptFollowRequest, unfollowUser, reportPost, reportForumQuestion}
 export default actionController

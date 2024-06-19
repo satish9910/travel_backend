@@ -42,21 +42,21 @@ model User {
 
   post            Post[]
   Comment         Comment[]
-  follows         Follows[]       @relation(name: "FollowerUser")
-  followers       Follows[]       @relation(name: "UserFollows")
+  follows         Follows[]        @relation(name: "FollowerUser")
+  followers       Follows[]        @relation(name: "UserFollows")
   customTrips     CustomTrip[]
   forumQuestions  ForumQuestion[]
-  answers         ForumAnswer[]   @relation("UsersAnswer")
-  blocked         Block[]         @relation(name: "BlockedUser")
-  blockedBy       Block[]         @relation(name: "UserBlock")
-  followRequest   FollowRequest[] @relation(name: "FollowRequestUser")
-  followerRequest FollowRequest[] @relation(name: "FollowRequestFollower")
-  sender          Message[]       @relation("sender")
-  receiver        Message[]       @relation("receiver")
+  answers         ForumAnswer[]    @relation("UsersAnswer")
+  blocked         Block[]          @relation(name: "BlockedUser")
+  blockedBy       Block[]          @relation(name: "UserBlock")
+  followRequest   FollowRequest[]  @relation(name: "FollowRequestUser")
+  followerRequest FollowRequest[]  @relation(name: "FollowRequestFollower")
+  sender          Message[]        @relation("sender")
+  receiver        Message[]        @relation("receiver")
   participated    Participant[]
   pinnedLocations PinnedLocation[]
   kyc             KYC?
-  kycStatus       Int?            @default(-1) // -1 = not submitted, 0 = pending, 1 = accepted, 2 = rejected
+  kycStatus       Int?             @default(-1) // -1 = not submitted, 0 = pending, 1 = accepted, 2 = rejected
 }
 
 model KYC {
@@ -109,6 +109,7 @@ model Post {
   longitude   String?
   place       String?
   thumbnail   String?
+  reports     Int       @default(0)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -303,8 +304,9 @@ model ForumQuestion {
   question   String
   answers    ForumAnswer[] @relation("QuestionToAnswer")
   user_id    Int
-  user       User          @relation(fields: [user_id], references: [id])
+  user       User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
   likes      QLikes[]
+  reports    Int           @default(0)
   created_at DateTime      @default(now())
   updated_at DateTime      @updatedAt
 }
@@ -313,7 +315,7 @@ model ForumAnswer {
   id          Int           @id @default(autoincrement())
   answer      String
   question_id Int
-  question    ForumQuestion @relation("QuestionToAnswer", fields: [question_id], references: [id])
+  question    ForumQuestion @relation("QuestionToAnswer", fields: [question_id], references: [id], onDelete: Cascade)
   user_id     Int
   created_at  DateTime      @default(now())
   updated_at  DateTime      @updatedAt
@@ -391,6 +393,6 @@ model PinnedLocation {
   latitude   Float
   longitude  Float
   title      String?
-  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   created_at DateTime @default(now())
 }

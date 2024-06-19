@@ -54,6 +54,7 @@ model User {
   sender          Message[]       @relation("sender")
   receiver        Message[]       @relation("receiver")
   participated    Participant[]
+  pinnedLocations PinnedLocation[]
   kyc             KYC?
   kycStatus       Int?            @default(-1) // -1 = not submitted, 0 = pending, 1 = accepted, 2 = rejected
 }
@@ -381,5 +382,15 @@ model SuperAdmin {
   username   String   @unique
   password   String
   phone      String
+  created_at DateTime @default(now())
+}
+
+model PinnedLocation {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  latitude   Float
+  longitude  Float
+  title      String?
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   created_at DateTime @default(now())
 }

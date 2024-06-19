@@ -710,6 +710,44 @@ const getFollowStatus = async (req: ExtendedRequest, res: Response, next: NextFu
     }
 }
 
+const pinLocation = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const { latitude, longitude, title } = req.body
+    if (!latitude || !longitude) {
+        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Latitude and Longitude is required' })
+    }
+    try {
+        const addedPin = await prisma.pinnedLocation.create({
+            data: {
+                latitude: latitude,
+                longitude: longitude,
+                title: title,
+                user_id: user.id
+            }
+        })
+        return res.status(200).send({ status: 200, message: 'Ok', pinned: addedPin })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const deletePinnedLocation = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const { id } = req.params
+    if (!id) {
+        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Id is required' })
+    }
+    try {
+        await prisma.pinnedLocation.delete({
+            where: { id: Number(id) }
+        })
+        return res.status(200).send({ status: 200, message: 'Ok' })
+    } catch (err) {
+        return next(err)
+    }
+
+}
+
 const userController = {
     getSuggestion,
     get_all_users,
@@ -732,7 +770,9 @@ const userController = {
     rateService,
     getUserFollowersFollowingById,
     submitKycDetails,
-    getFollowStatus
+    getFollowStatus,
+    pinLocation,
+    deletePinnedLocation
 }
 
 export default userController

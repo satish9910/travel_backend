@@ -260,6 +260,13 @@ const getLocations = async (req: ExtendedRequest, res: Response, next: NextFunct
             is_payment_confirmed: true,
         },
     })
+    const customTripLocations = await Promise.all(customTrips.map(async (trip) => {
+        const itinerary = Array(trip.itinerary);
+        itinerary.forEach(async (itineraryItem) => {
+            console.log(itineraryItem);
+            
+        })
+    }))
     
     return res.status(200).send({ status: 200, locations: tripLocations });
 }

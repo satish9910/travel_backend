@@ -336,14 +336,14 @@ const reportForumQuestion = async (req: ExtendedRequest, res: Response, next: Ne
     try {
         const totalReports = await prisma.forumReport.count({ where: { question_id: question_id } })
         if (totalReports > 4) {
-            await prisma.forumQuestion.delete({ where: { id: question_id } })
+            await prisma.forumReport.delete({ where: { id: question_id } })
             return res.status(200).send({ status: 200, message: 'Forum deleted', forum_id: question_id })
         }
     } catch (err) {
         return next(err)
     }
     try {
-        const alreadyReported = await prisma.forumQuestion.findFirst({
+        const alreadyReported = await prisma.forumReport.findFirst({
             where: { id: question_id, user_id: req.user.id },
         })
         if (alreadyReported) {

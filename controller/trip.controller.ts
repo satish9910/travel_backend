@@ -252,7 +252,7 @@ const getLocations = async (req: ExtendedRequest, res: Response, next: NextFunct
     const tripLocations = await Promise.all(trips.map(async (trip) => {
         const destination = trip.destination;
         const location = await prisma.destination.findFirst({ where: { destination: destination } });
-        return { tripId: trip.id, destination: [trip.destination, location?.latitude, location?.longitude] };
+        return { tripId: trip.id, destination: [{location: trip.destination, latitude: location?.latitude, longitude: location?.longitude, image: location?.image}] };
     }));
     const customTrips = await prisma.customTrip.findMany({
         where: {
@@ -260,11 +260,7 @@ const getLocations = async (req: ExtendedRequest, res: Response, next: NextFunct
             is_payment_confirmed: true,
         },
     })
-    // const customTripLocations = await Promise.all(customTrips.map(async (trip) => {
-    //     const destination = trip.itinerary[0].destination;
-    //     const location = await prisma.destination.findFirst({ where: { destination: destination } });
-    //     return { tripId: trip.id, destination: [trip.destination, location?.latitude, location?.longitude] };
-    // }));
+    
     return res.status(200).send({ status: 200, locations: tripLocations });
 }
 

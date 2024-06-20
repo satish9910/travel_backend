@@ -56,7 +56,7 @@ model User {
   participated    Participant[]
   pinnedLocations PinnedLocation[]
   kyc             KYC?
-  kycStatus       Int?             @default(-1) // -1 = not submitted, 0 = pending, 1 = accepted
+  kycStatus       Int?             @default(-1) // -1 = not submitted, 0 = submitted, 1 = accepted
 }
 
 model KYC {

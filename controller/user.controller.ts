@@ -680,6 +680,7 @@ const submitKycDetails = async (req: ExtendedRequest, res: Response, next: NextF
                 user_id: user.id
             }
         })
+        await prisma.user.update({where: {id: user.id}, data: {kycStatus: 0}})
         return res.status(200).send({ status: 200, message: 'Ok' })
     } catch (err) {
         return next(err)

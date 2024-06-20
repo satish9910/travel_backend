@@ -112,7 +112,7 @@ app.use("/forum", middleware.AuthMiddleware, forumRouter)
 //@ts-ignore
 app.use('/message', middleware.AuthMiddleware, messageRouter)
 // @ts-ignore
-app.use('/superAdmin', middleware.superAdminAuthMiddleware, SuperAdminRouter)
+app.use('/superAdmin', SuperAdminRouter)
 
 cron.schedule('0 0 * * *', async () => {      
     console.log('Running your daily task...')

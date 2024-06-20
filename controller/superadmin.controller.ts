@@ -120,6 +120,10 @@ export const userTrips = async (req: ExtendedRequest, res: Response, next: NextF
 
 const getKycDetails = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const { user_id } = req.body
+    if (!user_id) return res.status(400).send({ error: 'User id is required' })
+    if (isNaN(Number(user_id))) return res.status(400).send({ error: 'Invalid user id' })
+    console.log('user_id', user_id)
+
     try {
         const kycDetails = await prisma.kYC.findFirst({ where: { user_id: user_id } })
         if (!kycDetails) return res.status(200).send({ message: 'Kyc details not submitted' })
@@ -131,6 +135,8 @@ const getKycDetails = async (req: ExtendedRequest, res: Response, next: NextFunc
 
 const handleKyc = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const { user_id, kycStatus } = req.body
+    if (!user_id) return res.status(400).send({ error: 'User id is required' })
+    if (isNaN(Number(user_id))) return res.status(400).send({ error: 'Invalid user id' })
     try {
         const kycDetails = await prisma.kYC.findFirst({ where: { user_id: user_id } })
         if (!kycDetails) return res.status(200).send({ message: 'Kyc details not submitted' })

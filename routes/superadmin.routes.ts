@@ -17,9 +17,9 @@ SuperAdminRouter
     //@ts-ignore
     .get('/user-trips/:user_id', superAdminController.userTrips)
     //@ts-ignore
-    .get('/kyc', superAdminController.getKycDetails)
+    .post('/kyc', superAdminController.getKycDetails)
     //@ts-ignore
-    .post('/kyc', superAdminController.handleKyc)
+    .post('/kyc/handle', superAdminController.handleKyc)
     
 
 export default SuperAdminRouter

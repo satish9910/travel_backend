@@ -16,6 +16,10 @@ SuperAdminRouter
     .get('/vendor-trips/:host_id', superAdminController.hostTrips)
     //@ts-ignore
     .get('/user-trips/:user_id', superAdminController.userTrips)
+    //@ts-ignore
+    .get('/kyc', superAdminController.getKycDetails)
+    //@ts-ignore
+    .post('/kyc', superAdminController.handleKyc)
     
 
 export default SuperAdminRouter

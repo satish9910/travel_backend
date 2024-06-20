@@ -122,12 +122,13 @@ const getKycDetails = async (req: ExtendedRequest, res: Response, next: NextFunc
     const { user_id } = req.body
     if (!user_id) return res.status(400).send({ error: 'User id is required' })
     if (isNaN(Number(user_id))) return res.status(400).send({ error: 'Invalid user id' })
-    console.log('user_id', user_id)
 
     try {
+        const user = await prisma.user.findFirst({ where: { id: user_id } })
+        const kyc_status = user?.kycStatus
         const kycDetails = await prisma.kYC.findFirst({ where: { user_id: user_id } })
         if (!kycDetails) return res.status(200).send({ message: 'Kyc details not submitted' })
-        return res.status(200).send({ message: 'ok', kycDetails })
+        return res.status(200).send({ message: 'ok', kycDetails, kyc_status: kyc_status })
     } catch (err) {
         return res.status(400).send({ error: 'Error in getting kyc details' })
     }
@@ -141,7 +142,11 @@ const handleKyc = async (req: ExtendedRequest, res: Response, next: NextFunction
         const kycDetails = await prisma.kYC.findFirst({ where: { user_id: user_id } })
         if (!kycDetails) return res.status(200).send({ message: 'Kyc details not submitted' })
         const kyc = await prisma.user.update({ where: { id: user_id }, data: { kycStatus: kycStatus } })
-        return res.status(200).send({ message: 'ok', kyc })
+        if (kycStatus === -1) {
+            await prisma.user.update({ where: { id: user_id }, data: { kycStatus: kycStatus } })
+            await prisma.kYC.delete({ where: { user_id: user_id } })
+        }
+        return res.status(200).send({ message: 'ok' })
     } catch (err) {
         return next(err)
     }

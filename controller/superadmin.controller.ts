@@ -127,7 +127,7 @@ const getKycDetails = async (req: ExtendedRequest, res: Response, next: NextFunc
         const user = await prisma.user.findFirst({ where: { id: user_id } })
         const kyc_status = user?.kycStatus
         const kycDetails = await prisma.kYC.findFirst({ where: { user_id: user_id } })
-        if (!kycDetails) return res.status(200).send({ message: 'Kyc details not submitted' })
+        if (!kycDetails) return res.status(200).send({ message: 'Kyc details not submitted', kyc_status: kyc_status })
         return res.status(200).send({ message: 'ok', kycDetails, kyc_status: kyc_status })
     } catch (err) {
         return res.status(400).send({ error: 'Error in getting kyc details' })

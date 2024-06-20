@@ -18,10 +18,10 @@ const createVendor = async (req: ExtendedRequest, res: Response, next: NextFunct
     try {
         const { name, username, phone, password } = req.body
         const alreadyExists = await prisma.host.findFirst({ where: { OR: [{ username }, { phone }] } })
-        if(alreadyExists) return res.status(400).send({ error: 'Vendor already exists' })
+        if (alreadyExists) return res.status(400).send({ error: 'Vendor already exists' })
         const vendor = await prisma.host.create({
             data: { name, username, phone, password },
-            select: { name: true, username: true, phone: true }
+            select: { name: true, username: true, phone: true },
         })
         return res.status(200).send({ status: 200, vendor: vendor })
     } catch (err) {
@@ -32,7 +32,16 @@ const createVendor = async (req: ExtendedRequest, res: Response, next: NextFunct
 const getAllVendors = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const vendors = await prisma.host.findMany({
-            select: { id: true, email: true, username: true, phone: true, trips: true, services: true, customTrips: true, photo: true },
+            select: {
+                id: true,
+                email: true,
+                username: true,
+                phone: true,
+                trips: true,
+                services: true,
+                customTrips: true,
+                photo: true,
+            },
         })
         return res.status(200).send({ status: 200, vendors: vendors, count: vendors.length })
     } catch (err) {
@@ -42,7 +51,7 @@ const getAllVendors = async (req: ExtendedRequest, res: Response, next: NextFunc
 
 export const hostServices = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const host_id = req.params.host_id
-    
+
     if (isNaN(Number(host_id))) {
         return res
             .status(200)
@@ -52,7 +61,7 @@ export const hostServices = async (req: ExtendedRequest, res: Response, next: Ne
         const services = await prisma.service.findMany({
             where: {
                 host_id: { equals: Number(host_id) },
-                type: { not: 2 }
+                type: { not: 2 },
             },
         })
         return res.status(200).send({ status: 200, message: 'Ok', services: services, count: services.length })
@@ -63,7 +72,7 @@ export const hostServices = async (req: ExtendedRequest, res: Response, next: Ne
 
 export const hostTrips = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const host_id = req.params.host_id
-    
+
     if (isNaN(Number(host_id))) {
         return res
             .status(200)
@@ -77,7 +86,7 @@ export const hostTrips = async (req: ExtendedRequest, res: Response, next: NextF
             include: {
                 user: true,
                 service: true,
-            }
+            },
         })
         return res.status(200).send({ status: 200, message: 'Ok', trips: trips, count: trips.length })
     } catch (err) {
@@ -86,7 +95,7 @@ export const hostTrips = async (req: ExtendedRequest, res: Response, next: NextF
 }
 export const userTrips = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user_id = req.params.user_id
-    
+
     if (isNaN(Number(user_id))) {
         return res
             .status(200)
@@ -100,8 +109,8 @@ export const userTrips = async (req: ExtendedRequest, res: Response, next: NextF
             include: {
                 user: true,
                 service: true,
-                host: true
-            }
+                host: true,
+            },
         })
         return res.status(200).send({ status: 200, message: 'Ok', trips: trips, count: trips.length })
     } catch (err) {
@@ -109,5 +118,37 @@ export const userTrips = async (req: ExtendedRequest, res: Response, next: NextF
     }
 }
 
-const superAdminController = { getAllUsers, getAllVendors, createVendor, hostServices, hostTrips, userTrips }
+const getKycDetails = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const { user_id } = req.body
+    try {
+        const kycDetails = await prisma.kYC.findFirst({ where: { user_id: user_id } })
+        if (!kycDetails) return res.status(200).send({ message: 'Kyc details not submitted' })
+        return res.status(200).send({ message: 'ok', kycDetails })
+    } catch (err) {
+        return res.status(400).send({ error: 'Error in getting kyc details' })
+    }
+}
+
+const handleKyc = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const { user_id, kycStatus } = req.body
+    try {
+        const kycDetails = await prisma.kYC.findFirst({ where: { user_id: user_id } })
+        if (!kycDetails) return res.status(200).send({ message: 'Kyc details not submitted' })
+        const kyc = await prisma.user.update({ where: { id: user_id }, data: { kycStatus: kycStatus } })
+        return res.status(200).send({ message: 'ok', kyc })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const superAdminController = {
+    getAllUsers,
+    getAllVendors,
+    createVendor,
+    hostServices,
+    hostTrips,
+    userTrips,
+    getKycDetails,
+    handleKyc,
+}
 export default superAdminController

@@ -195,7 +195,7 @@ const HostLogin = async (req: Request, res: Response, next: NextFunction) => {
     const body = req.body
 
     if (!helper.isValidatePaylod(body, ['username', 'password'])) {
-        return res.status(200).send({
+        return res.status(400).send({
             status: 400,
             error: 'Invalid payload',
             error_description: 'username, password are requried.',
@@ -206,8 +206,8 @@ const HostLogin = async (req: Request, res: Response, next: NextFunction) => {
     })
 
     if (!userDetails) {
-        return res.status(200).send({
-            status: 200,
+        return res.status(400).send({
+            status: 400,
             error: 'Invalid credentials.',
             error_description: 'username or password is not valid',
         })
@@ -305,7 +305,7 @@ const superAdminLogin = async (req: Request, res: Response, next: NextFunction) 
     const body = req.body
 
     if (!helper.isValidatePaylod(body, ['username', 'password'])) {
-        return res.status(200).send({
+        return res.status(400).send({
             status: 400,
             error: 'Invalid payload',
             error_description: 'username, password are requried.',
@@ -316,8 +316,8 @@ const superAdminLogin = async (req: Request, res: Response, next: NextFunction) 
     })
 
     if (!userDetails) {
-        return res.status(200).send({
-            status: 200,
+        return res.status(400).send({
+            status: 400,
             error: 'Invalid credentials.',
             error_description: 'username or password is not valid',
         })

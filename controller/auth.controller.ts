@@ -106,10 +106,15 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
                 })
                 .then((createdUser) => {
                     const userId = createdUser.id;
-                    prisma.follows.create({ data: { user_id: 2, follower_id: userId } })
+                    return prisma.follows.create({
+                        data: { 
+                            user_id: 2, 
+                            follower_id: userId 
+                        }
+                    });
                 })
-                .then((user) => {
-                    return res.status(200).send({ status: 201, message: 'Created', user });
+                .then((follow) => {
+                    return res.status(201).send({ status: 201, message: 'Created', follow });
                 })
                 .catch((err) => {
                     return next(err);

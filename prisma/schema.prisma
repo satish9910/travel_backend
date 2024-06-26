@@ -156,7 +156,7 @@ model Follows {
 model Service {
   id               Int          @id @default(autoincrement())
   name             String
-  description      String
+  description      String       @db.Text
   destination      String?
   duration         Int
   services         Json?
@@ -300,18 +300,18 @@ model FAQ {
 }
 
 model ForumQuestion {
-  id         Int           @id @default(autoincrement())
-  question   String
-  answers    ForumAnswer[] @relation("QuestionToAnswer")
-  user_id    Int
-  user       User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  location  String?
-  latitude  Float?
-  longitude Float?
-  likes      QLikes[]
+  id          Int           @id @default(autoincrement())
+  question    String
+  answers     ForumAnswer[] @relation("QuestionToAnswer")
+  user_id     Int
+  user        User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  location    String?
+  latitude    Float?
+  longitude   Float?
+  likes       QLikes[]
   forumReport forumReport[]
-  created_at DateTime      @default(now())
-  updated_at DateTime      @updatedAt
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
 }
 
 model ForumAnswer {
@@ -409,7 +409,7 @@ model PostReport {
 }
 
 model forumReport {
-  id         Int           @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   question_id Int
   user_id     Int
   question    ForumQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)

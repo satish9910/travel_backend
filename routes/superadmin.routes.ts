@@ -1,25 +1,26 @@
 import { Router } from 'express'
 import superAdminController from '../controller/superadmin.controller'
+import middleware from '../utils/middleware'
 const SuperAdminRouter = Router()
 
 //@ts-ignore
 SuperAdminRouter
     //@ts-ignore
-    .get('/users', superAdminController.getAllUsers)
+    .get('/users', middleware.superAdminAuthMiddleware, superAdminController.getAllUsers)
     //@ts-ignore
-    .get('/vendors', superAdminController.getAllVendors)
+    .get('/vendors' , middleware.superAdminAuthMiddleware, superAdminController.getAllVendors)
     //@ts-ignore
-    .post('/vendor', superAdminController.createVendor)
+    .post('/vendor', middleware.superAdminAuthMiddleware, superAdminController.createVendor)
     //@ts-ignore
-    .get('/vendor-services/:host_id', superAdminController.hostServices)
+    .get('/vendor-services/:host_id', middleware.superAdminAuthMiddleware, superAdminController.hostServices)
     //@ts-ignore
-    .get('/vendor-trips/:host_id', superAdminController.hostTrips)
+    .get('/vendor-trips/:host_id', middleware.superAdminAuthMiddleware, superAdminController.hostTrips)
     //@ts-ignore
-    .get('/user-trips/:user_id', superAdminController.userTrips)
+    .get('/user-trips/:user_id', middleware.superAdminAuthMiddleware, superAdminController.userTrips)
     //@ts-ignore
-    .post('/kyc', superAdminController.getKycDetails)
+    .post('/kyc', middleware.superAdminAuthMiddleware, superAdminController.getKycDetails)
     //@ts-ignore
-    .post('/kyc/handle', superAdminController.handleKyc)
+    .post('/kyc/handle', middleware.superAdminAuthMiddleware, superAdminController.handleKyc)
     //@ts-ignore
     .get('/service-options', superAdminController.getServiceOptions)
     //@ts-ignore

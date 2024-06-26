@@ -152,6 +152,35 @@ const handleKyc = async (req: ExtendedRequest, res: Response, next: NextFunction
     }
 }
 
+const getServiceOptions = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const serviceOptions = await prisma.serviceOptions.findMany({})
+        return res.status(200).send({ status: 200, serviceOptions: serviceOptions })
+    } catch (err) {
+        return res.status(400).send({ error: 'Error in getting service options' })
+    }
+}
+
+const addServiceOption = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { name } = req.body
+        const serviceOption = await prisma.serviceOptions.create({ data: { name } })
+        return res.status(200).send({ status: 200, serviceOption: serviceOption })
+    } catch (err) {
+        return res.status(400).send({ error: 'Error in adding service option' })
+    }
+}
+
+const deleteServiceOption = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const id = req.params.id
+        const serviceOption = await prisma.serviceOptions.delete({ where: { id: Number(id) } })
+        return res.status(200).send({ status: 200, serviceOption: serviceOption })
+    } catch (err) {
+        return res.status(400).send({ error: 'Error in deleting service option' })
+    }
+}
+
 const superAdminController = {
     getAllUsers,
     getAllVendors,
@@ -161,5 +190,8 @@ const superAdminController = {
     userTrips,
     getKycDetails,
     handleKyc,
+    getServiceOptions,
+    addServiceOption,
+    deleteServiceOption
 }
 export default superAdminController

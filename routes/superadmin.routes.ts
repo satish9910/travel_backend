@@ -20,6 +20,12 @@ SuperAdminRouter
     .post('/kyc', superAdminController.getKycDetails)
     //@ts-ignore
     .post('/kyc/handle', superAdminController.handleKyc)
+    //@ts-ignore
+    .get('/service-options', superAdminController.getServiceOptions)
+    //@ts-ignore
+    .post('/service-option', superAdminController.addServiceOption)
+    //@ts-ignore
+    .delete('/service-option/:id', superAdminController.deleteServiceOption)
     
 
 export default SuperAdminRouter

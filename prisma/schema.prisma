@@ -73,15 +73,15 @@ model KYC {
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 
-  user User @relation(fields: [user_id], references: [id])
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Block {
   id         Int      @id @default(autoincrement())
   user_id    Int
   blocked_id Int
-  user       User     @relation(name: "UserBlock", fields: [user_id], references: [id])
-  blocked    User     @relation(name: "BlockedUser", fields: [blocked_id], references: [id])
+  user       User     @relation(name: "UserBlock", fields: [user_id], references: [id], onDelete: Cascade)
+  blocked    User     @relation(name: "BlockedUser", fields: [blocked_id], references: [id], onDelete: Cascade)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }
@@ -93,7 +93,7 @@ model Otp {
   updated_at DateTime @updatedAt
 
   user_id Int  @unique
-  user    User @relation(fields: [user_id], references: [id])
+  user    User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Post {
@@ -104,7 +104,7 @@ model Post {
   likes       Int          @default(0)
   comment     Comment[]
   user_id     Int
-  user        User         @relation(fields: [user_id], references: [id])
+  user        User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
   latitude    String?
   longitude   String?
   place       String?
@@ -127,7 +127,7 @@ model Comment {
   postId     Int
   Post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   user_id    Int
-  user       User     @relation(fields: [user_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }
@@ -147,8 +147,8 @@ model Follows {
   id          Int      @id @default(autoincrement())
   user_id     Int
   follower_id Int
-  follower    User     @relation(name: "FollowerUser", fields: [follower_id], references: [id])
-  user        User     @relation(name: "UserFollows", fields: [user_id], references: [id])
+  follower    User     @relation(name: "FollowerUser", fields: [follower_id], references: [id], onDelete: Cascade)
+  user        User     @relation(name: "UserFollows", fields: [user_id], references: [id], onDelete: Cascade)
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 }
@@ -205,7 +205,7 @@ model Trip {
   host                 Host      @relation(fields: [host_id], references: [id])
 
   service    Service? @relation(fields: [service_id], references: [id], onDelete: SetNull)
-  user       User     @relation(fields: [user_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }
@@ -230,7 +230,7 @@ model CustomTrip {
   host                 Host?     @relation(fields: [host_id], references: [id])
 
   service    Service? @relation(fields: [service_id], references: [id], onDelete: SetNull)
-  user       User     @relation(fields: [user_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 }
@@ -244,7 +244,7 @@ model Expense {
   trip_id      Int
   customTripId Int?
 
-  user       User        @relation(fields: [user_id], references: [id])
+  user       User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
   trip       Trip        @relation(fields: [trip_id], references: [id])
   customTrip CustomTrip? @relation(fields: [customTripId], references: [id])
   created_at DateTime    @default(now())
@@ -329,7 +329,7 @@ model QLikes {
   id          Int           @id @default(autoincrement())
   question_id Int
   user_id     Int
-  question    ForumQuestion @relation(fields: [question_id], references: [id])
+  question    ForumQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -340,7 +340,7 @@ model FollowRequest {
   user_id     Int
   follower_id Int
   status      Int      @default(0) // 0 = pending, 1 = accepted, 2 = rejected
-  user        User     @relation(name: "FollowRequestUser", fields: [user_id], references: [id])
+  user        User     @relation(name: "FollowRequestUser", fields: [user_id], references: [id], onDelete: Cascade)
   follower    User     @relation(name: "FollowRequestFollower", fields: [follower_id], references: [id])
   created_at  DateTime @default(now())
   updated_at  DateTime @default(now()) @updatedAt
@@ -358,8 +358,8 @@ model Message {
   receiver_id     Int?
   conversation_id Int
   conversation    Conversation @relation(fields: [conversation_id], references: [id])
-  sender          User         @relation("sender", fields: [user_id], references: [id])
-  receiver        User?        @relation("receiver", fields: [receiver_id], references: [id])
+  sender          User         @relation("sender", fields: [user_id], references: [id], onDelete: Cascade)
+  receiver        User?        @relation("receiver", fields: [receiver_id], references: [id], onDelete: Cascade)
   created_at      DateTime     @default(now())
   updated_at      DateTime     @default(now()) @updatedAt
 }
@@ -376,9 +376,9 @@ model Conversation {
 
 model Participant {
   id             Int          @id @default(autoincrement())
-  user           User         @relation(fields: [userId], references: [id])
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         Int
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   conversationId Int
 }
 
@@ -404,7 +404,7 @@ model PostReport {
   id         Int      @id @default(autoincrement())
   post_id    Int
   user_id    Int
-  post       Post     @relation(fields: [post_id], references: [id])
+  post       Post     @relation(fields: [post_id], references: [id], onDelete: Cascade)
   created_at DateTime @default(now())
 }
 
@@ -412,7 +412,7 @@ model forumReport {
   id         Int           @id @default(autoincrement())
   question_id Int
   user_id     Int
-  question    ForumQuestion @relation(fields: [question_id], references: [id])
+  question    ForumQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 }

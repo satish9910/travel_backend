@@ -114,7 +114,7 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
                     });
                 })
                 .then((follow) => {
-                    return res.status(201).send({ status: 201, message: 'Created', follow });
+                    return res.status(201).send({ status: 201, message: 'Created' });
                 })
                 .catch((err) => {
                     return next(err);
@@ -297,14 +297,28 @@ const socialSignUp = async (req: Request, res: Response, next: NextFunction, ema
         if (err) return next(err)
         else {
             prisma.user
-                .create({ data: { email, password: hash_password, userReferralCode: referralCode } })
-                .then((r) => {
-                    delete (r as any).password
-                    return res.status(200).send({ status: 201, message: 'Created', user: r, token })
+                .create({
+                    data: {
+                        email,
+                        password: hash_password,
+                        userReferralCode: referralCode,
+                    },
+                })
+                .then((createdUser) => {
+                    const userId = createdUser.id;
+                    return prisma.follows.create({
+                        data: { 
+                            user_id: 2, 
+                            follower_id: userId 
+                        }
+                    });
+                })
+                .then((follow) => {
+                    return res.status(201).send({ status: 201, message: 'Created', token });
                 })
                 .catch((err) => {
-                    return next(err)
-                })
+                    return next(err);
+                });
         }
     })
 }

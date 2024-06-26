@@ -11,7 +11,15 @@ const createForumQuestion = async (req: ExtendedRequest, res: Response, next: Ne
         if (!helper.isValidatePaylod(body, ['question'])) {
             return res.status(200).send({ error: 'Invalid payload', error_description: 'question is required.' })
         }
-        const forumQuestion = await prisma.forumQuestion.create({ data: { question: body.question, location: body.location, latitude: body.latitude, longitude: body.longitude, user: { connect: { id: user.id, username: user.username, image: user.image } } } })
+        const forumQuestion = await prisma.forumQuestion.create({
+            data: {
+                question: body.question,
+                location: body.location,
+                latitude: body.latitude,
+                longitude: body.longitude,
+                user: { connect: { id: user.id, username: user.username, image: user.image } },
+            },
+        })
         return res.status(200).send({ message: 'forum question created', forumQuestion })
     } catch (err) {
         return next(err)
@@ -21,18 +29,43 @@ const createForumQuestion = async (req: ExtendedRequest, res: Response, next: Ne
 const getAllForumQuestions = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         const forumQuestions = await prisma.forumQuestion.findMany({
-            include: { 
-            user: { select: { id: true, username: true, image: true, status: true } }, 
-            answers: { include: { User: { select: { id: true, username: true, image: true, status: true } } } },
-            likes: { select: { user_id: true }}
+            include: {
+                user: { select: { id: true, username: true, image: true, status: true } },
+                answers: { include: { User: { select: { id: true, username: true, image: true, status: true } } } },
+                likes: { select: { user_id: true } },
             },
         })
 
-        const forumQuestionsWithAnswerAndLikeCount = forumQuestions.map(question => ({
+        const forumQuestionsWithAnswerAndLikeCount = forumQuestions.map((question) => ({
             ...question,
             answerCount: question.answers.length,
             likeCount: question.likes.length,
-            isLiked: question.likes.some(like => like.user_id === req.user.id),
+            isLiked: question.likes.some((like) => like.user_id === req.user.id),
+        }))
+
+        return res.status(200).send({ forumQuestions: forumQuestionsWithAnswerAndLikeCount })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+const getForumQuestionsByLocation = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const location = req.body.location
+    try {
+        const forumQuestions = await prisma.forumQuestion.findMany({
+            where: { location: location },
+            include: {
+                user: { select: { id: true, username: true, image: true, status: true } },
+                answers: { include: { User: { select: { id: true, username: true, image: true, status: true } } } },
+                likes: { select: { user_id: true } },
+            },
+        })
+
+        const forumQuestionsWithAnswerAndLikeCount = forumQuestions.map((question) => ({
+            ...question,
+            answerCount: question.answers.length,
+            likeCount: question.likes.length,
+            isLiked: question.likes.some((like) => like.user_id === req.user.id),
         }))
 
         return res.status(200).send({ forumQuestions: forumQuestionsWithAnswerAndLikeCount })
@@ -68,7 +101,10 @@ const createAnswer = async (req: ExtendedRequest, res: Response, next: NextFunct
         const forumAnswer = await prisma.forumAnswer.create({
             data: { answer: body.answer, user_id: user.id, question_id: questionId },
         })
-        const allAnswers = await prisma.forumAnswer.findMany({where: { question_id: questionId }, include: { User: { select: { id: true, username: true, image: true } } }})
+        const allAnswers = await prisma.forumAnswer.findMany({
+            where: { question_id: questionId },
+            include: { User: { select: { id: true, username: true, image: true } } },
+        })
         return res.status(200).send({ message: 'forum answer created', allAnswers })
     } catch (err) {
         return next(err)
@@ -94,6 +130,6 @@ export const likeQuestion = async (req: ExtendedRequest, res: Response, next: Ne
     }
 }
 
-const forumController = { createForumQuestion, getAllForumQuestions, getForumQuestion, createAnswer, likeQuestion }
+const forumController = { createForumQuestion, getAllForumQuestions, getForumQuestion, createAnswer, likeQuestion, getForumQuestionsByLocation }
 
 export default forumController

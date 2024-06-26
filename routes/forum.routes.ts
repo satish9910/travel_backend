@@ -17,4 +17,7 @@ forumRouter.post("/answer/:id", forumController.createAnswer)
 //@ts-ignore
 forumRouter.post("/like/:id", forumController.likeQuestion)
 
+//@ts-ignore
+forumRouter.post("/location", forumController.getForumQuestionsByLocation)
+
 export default forumRouter

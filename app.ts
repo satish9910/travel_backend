@@ -72,18 +72,18 @@ io.on('connection', (socket) => {
     })
 })
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT!);
+// const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT!);
 
-try {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        // databaseURL: process.env.FIREBASE_DATABASE_URL,
-    });
+// try {
+//     admin.initializeApp({
+//         credential: admin.credential.cert(serviceAccount),
+//         // databaseURL: process.env.FIREBASE_DATABASE_URL,
+//     });
 
-    console.log('Firebase Admin initialized successfully.');
-} catch (error) {
-    console.error('Error initializing Firebase Admin:', error);
-}
+//     console.log('Firebase Admin initialized successfully.');
+// } catch (error) {
+//     console.error('Error initializing Firebase Admin:', error);
+// }
 
 app.get('/ping', (_req, res) => {
     return res.status(200).send({ status: 200, message: 'pong' })

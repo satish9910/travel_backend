@@ -26,7 +26,7 @@ import faqRouter from './routes/faq.routes'
 import forumRouter from './routes/forum.routes'
 import messageRouter from './routes/message.routes'
 import SuperAdminRouter from './routes/superadmin.routes'
-import admin from 'firebase-admin'
+import * as admin from 'firebase-admin';
 
 
 app.use(express.static('public'))
@@ -73,13 +73,11 @@ io.on('connection', (socket) => {
 })
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT!);
-console.log(serviceAccount, 'service account');
-console.log(process.env.FIREBASE_DATABASE_URL!, 'database url');
 
 try {
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        databaseURL: process.env.FIREBASE_DATABASE_URL,
+        // databaseURL: process.env.FIREBASE_DATABASE_URL,
     });
 
     console.log('Firebase Admin initialized successfully.');
@@ -134,16 +132,17 @@ app.use('/message', middleware.AuthMiddleware, messageRouter)
 // @ts-ignore
 app.use('/superAdmin', SuperAdminRouter)
 
-export const sendNotification = async (registrationToken: any, payload: any) => {
+export const sendNotification = async (registrationToken: string, payload: { title: string, body: string }) => {
     try {
         const message = {
+            token: registrationToken,
             notification: {
                 title: payload.title,
                 body: payload.body
             }
         };
 
-        const response = await admin.messaging().sendToDevice(registrationToken, message);
+        const response = await admin.messaging().send(message);
         console.log('Successfully sent message:', response);
         return response;
     } catch (error) {

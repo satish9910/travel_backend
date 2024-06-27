@@ -36,6 +36,8 @@ userRouter
     //@ts-ignore
     .put('/location', userController.updateLatLong)
     //@ts-ignore
+    .put('/registrationToken', userController.updateRegistrationToken)
+    //@ts-ignore
     .get('/nearby', userController.getNearbyUsers)
     //@ts-ignore
     .delete('/delete', userController.deleteAccount)

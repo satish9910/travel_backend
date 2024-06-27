@@ -39,6 +39,7 @@ model User {
   status           Boolean   @default(false)
   typeOfTraveller  Int?      @default(1) // 0 = solo, 1 = group
   visible          Boolean   @default(true)
+  registrationToken String?
 
   post            Post[]
   Comment         Comment[]

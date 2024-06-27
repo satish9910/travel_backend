@@ -474,6 +474,27 @@ const updateLatLong = async (req: ExtendedRequest, res: Response, next: NextFunc
     }
 }
 
+const updateRegistrationToken = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const { registrationToken } = req.body
+    if (!registrationToken) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'Registration Token is required' })
+    }
+    try {
+        const updatedUser = await prisma.user.update({
+            where: { id: user.id },
+            data: { registrationToken: registrationToken },
+        })
+        delete (updatedUser as any).password
+        return res.status(200).send({ status: 200, message: 'Ok', user: updatedUser })
+    } catch (err) {
+        return next(err)
+    }
+
+}
+
 const getNearbyUsers = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user;
 
@@ -780,7 +801,8 @@ const userController = {
     getFollowStatus,
     getPinnedLocations,
     pinLocation,
-    deletePinnedLocation
+    deletePinnedLocation,
+    updateRegistrationToken
 }
 
 export default userController

@@ -126,27 +126,28 @@ app.use('/message', middleware.AuthMiddleware, messageRouter)
 // @ts-ignore
 app.use('/superAdmin', SuperAdminRouter)
 
-const sendNotification = async (registrationToken: any, payload: any) => {
+export const sendNotification = async (registrationToken: any, payload: any) => {
     try {
-        const response = await admin.messaging().sendToDevice(registrationToken, payload)
-        console.log('Successfully sent message:', response)
-        return response
-    } catch (error) {
-        console.error('Error sending message:', error)
-        throw error
-    }
-}
+        const message = {
+            notification: {
+                title: payload.title,
+                body: payload.body
+            }
+        };
 
-app.post('/send-notification', async (req, res) => {
-    const { registrationToken, payload } = req.body
-
-    try {
-        const response = await sendNotification(registrationToken, payload)
-        res.status(200).send(response)
+        const response = await admin.messaging().sendToDevice(registrationToken, message);
+        console.log('Successfully sent message:', response);
+        return response;
     } catch (error) {
-        res.status(500).send(error)
+        console.error('Error sending message:', error);
+        throw error;
     }
-})
+};
+
+export const getUserToken = async (userId: any) => {
+    const user = await prisma.user.findUnique({where: {id: userId}, select: {registrationToken: true}})
+    return user ? user.registrationToken : null;
+};
 
 cron.schedule('0 0 * * *', async () => {
     console.log('Running your daily task...')

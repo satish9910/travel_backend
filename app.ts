@@ -1,12 +1,14 @@
 import express, { Request, Response } from 'express'
+import dotenv from 'dotenv'
+dotenv.config()
 import authRouter from './routes/auth.routes'
 import middleware from './utils/middleware'
 import userRouter from './routes/user.routes'
 import postRouter from './routes/post.routes'
 import fs from 'fs'
 import path from 'path'
-import http from 'http';
-import { Server } from 'socket.io';
+import http from 'http'
+import { Server } from 'socket.io'
 import actionRouter from './routes/action.routes'
 import tripRouter from './routes/trip.routes'
 import ServiceRouter from './routes/service.routes'
@@ -24,6 +26,9 @@ import faqRouter from './routes/faq.routes'
 import forumRouter from './routes/forum.routes'
 import messageRouter from './routes/message.routes'
 import SuperAdminRouter from './routes/superadmin.routes'
+import admin from 'firebase-admin'
+
+
 app.use(express.static('public'))
 app.use(express.json())
 // app.use(express.urlencoded({ extended: true }));
@@ -32,39 +37,46 @@ app.use(express.json())
 app.use(morgan('tiny'))
 app.use(cors())
 
-const server = http.createServer(app);
+const server = http.createServer(app)
 
 const io = new Server(server, {
     cors: {
         origin: '*',
-        methods: ['GET', 'POST']
-    }
-});
+        methods: ['GET', 'POST'],
+    },
+})
 
 export const getReceiverSocketId = (receiverId: string) => {
     return userSocketMap[receiverId]
 }
 
-const userSocketMap: { [key: string]: string } = {};
+const userSocketMap: { [key: string]: string } = {}
 
 io.on('connection', (socket) => {
-    console.log('user connected', socket.id);
+    console.log('user connected', socket.id)
     const userId = socket.handshake.query.userId
     if (typeof userId === 'string') {
-        userSocketMap[userId] = socket.id;
+        userSocketMap[userId] = socket.id
     }
 
     io.emit('getOnlineUsers', Object.keys(userSocketMap))
 
     socket.on('disconnect', () => {
-        console.log('user disconnected', socket.id);
-        for(const key in userSocketMap){
-            if(userSocketMap[key] === socket.id){
+        console.log('user disconnected', socket.id)
+        for (const key in userSocketMap) {
+            if (userSocketMap[key] === socket.id) {
                 delete userSocketMap[key]
             }
         }
         io.emit('getOnlineUsers', Object.keys(userSocketMap))
     })
+})
+
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT!);
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: process.env.FIREBASE_DATABASE_URL!,
 })
 
 app.get('/ping', (_req, res) => {
@@ -108,13 +120,35 @@ app.use('/custom', customtriprouter)
 //@ts-ignore
 app.use('/faq', faqRouter)
 //@ts-ignore
-app.use("/forum", middleware.AuthMiddleware, forumRouter)
+app.use('/forum', middleware.AuthMiddleware, forumRouter)
 //@ts-ignore
 app.use('/message', middleware.AuthMiddleware, messageRouter)
 // @ts-ignore
 app.use('/superAdmin', SuperAdminRouter)
 
-cron.schedule('0 0 * * *', async () => {      
+const sendNotification = async (registrationToken: any, payload: any) => {
+    try {
+        const response = await admin.messaging().sendToDevice(registrationToken, payload)
+        console.log('Successfully sent message:', response)
+        return response
+    } catch (error) {
+        console.error('Error sending message:', error)
+        throw error
+    }
+}
+
+app.post('/send-notification', async (req, res) => {
+    const { registrationToken, payload } = req.body
+
+    try {
+        const response = await sendNotification(registrationToken, payload)
+        res.status(200).send(response)
+    } catch (error) {
+        res.status(500).send(error)
+    }
+})
+
+cron.schedule('0 0 * * *', async () => {
     console.log('Running your daily task...')
 
     try {
@@ -172,4 +206,4 @@ app.all('*', (_req, res) => {
 })
 
 export default server
-export { io, server}
+export { io, server }

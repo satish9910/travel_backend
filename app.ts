@@ -130,7 +130,7 @@ app.use('/forum', middleware.AuthMiddleware, forumRouter)
 //@ts-ignore
 app.use('/message', middleware.AuthMiddleware, messageRouter)
 // @ts-ignore
-app.use('/superAdmin', middleware.superAdminAuthMiddleware, SuperAdminRouter)
+app.use('/superAdmin', SuperAdminRouter)
 
 export const sendNotification = async (registrationToken: string, payload: { title: string, body: string }) => {
     try {

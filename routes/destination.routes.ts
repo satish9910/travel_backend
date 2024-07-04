@@ -6,7 +6,7 @@ const DestinationRouter = Router()
 //@ts-ignore
 DestinationRouter
     //@ts-ignore
-    .post('/', destinationController.createDestination)
+    .post('/', middleware.superAdminAuthMiddleware, destinationController.createDestination)
     //@ts-ignore
     .get('/:id', destinationController.getSpecificDestination)
     //@ts-ignore

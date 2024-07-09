@@ -53,7 +53,7 @@ const getForumQuestionsByLocation = async (req: ExtendedRequest, res: Response, 
     const location = req.body.location
     try {
         const forumQuestions = await prisma.forumQuestion.findMany({
-            where: { location: location },
+            where: { location: {contains: location} },
             include: {
                 user: { select: { id: true, username: true, image: true, status: true } },
                 answers: { include: { User: { select: { id: true, username: true, image: true, status: true } } } },

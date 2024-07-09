@@ -7,11 +7,7 @@ const prisma = new PrismaClient()
 export const CreatePost = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const body = req.body
-    if (!helper.isValidatePaylod(body, ['image', 'description'])) {
-        return res
-            .status(200)
-            .send({ status: 200, error: 'Invalid payload', error_description: 'description & image is required.' })
-    }
+    const { filterName, transitionData, soundName } = body
     const post = await prisma.post.create({
         data: {
             image: body.image,
@@ -21,6 +17,25 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
             latitude: body.latitude,
             longitude: body.longitude,
             place: body.place,
+            soundName: soundName,
+            filterName: {
+                create: {
+                    name: filterName.name,
+                    t1: filterName.t1,
+                    t2: filterName.t2,
+                    t3: filterName.t3,
+                    t4: filterName.t4,
+                    t5: filterName.t5,
+                    t6: filterName.t6
+                }
+            },
+            transitionData: {
+                create: transitionData.map((td: any) => ({
+                    transitionType: td.transitionType,
+                    imageurl: td.imageurl,
+                    mediaType: td.mediaType
+                }))
+            },
         },
     })
     return res.status(200).send({ status: 201, message: 'Created', post: post })

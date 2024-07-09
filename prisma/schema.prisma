@@ -14,11 +14,11 @@ datasource db {
 }
 
 model User {
-  id                Int        @id @default(autoincrement())
-  username          String?    @unique
-  phone             String?    @unique
+  id                Int       @id @default(autoincrement())
+  username          String?   @unique
+  phone             String?   @unique
   password          String
-  email             String?    @unique
+  email             String?   @unique
   image             String?
   background_image  String?
   gender            Int? // 0 = female, 1 = male
@@ -28,17 +28,17 @@ model User {
   emergency_phone   String?
   latitude          Float?
   longitude         Float?
-  is_verified       Boolean    @default(false)
-  created_at        DateTime   @default(now())
-  updated_at        DateTime   @updatedAt
+  is_verified       Boolean   @default(false)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
   otp               Otp?
   trips             Trip[]
   expense           Expense[]
   userReferralCode  String?
   referredByCode    String?
-  status            Boolean    @default(false)
-  typeOfTraveller   Int?       @default(1) // 0 = solo, 1 = group
-  visible           Boolean    @default(true)
+  status            Boolean   @default(false)
+  typeOfTraveller   Int?      @default(1) // 0 = solo, 1 = group
+  visible           Boolean   @default(true)
   registrationToken String?
 
   post            Post[]
@@ -56,6 +56,7 @@ model User {
   receiver        Message[]        @relation("receiver")
   participated    Participant[]
   pinnedLocations PinnedLocation[]
+  // template        Template[]
   kyc             KYC?
   kycStatus       Int?             @default(-1) // -1 = not submitted, 0 = submitted, 1 = accepted
 }
@@ -99,7 +100,7 @@ model Otp {
 
 model Post {
   id          Int          @id @default(autoincrement())
-  image       String
+  image       String?
   description String?
   media_type  MediaType    @default(IMAGE)
   likes       Int          @default(0)
@@ -111,6 +112,9 @@ model Post {
   place       String?
   thumbnail   String?
   postReport  PostReport[]
+  transitionData TransitionData[]
+  soundName      String?
+  filterName     FilterName[]
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -120,6 +124,7 @@ model Post {
 enum MediaType {
   IMAGE
   VIDEO
+  TEMPLATE
 }
 
 model Comment {
@@ -429,8 +434,8 @@ model TransitionData {
   transitionType String
   imageurl       String
   mediaType      String   @default("image")
-  templateId     Int
-  template       Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  postId        Int
+  post          Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model FilterName {
@@ -442,18 +447,21 @@ model FilterName {
   t4         String
   t5         String
   t6         String
-  templateId Int
-  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
-model Template {
-  id             Int              @id @default(autoincrement())
-  transitionData TransitionData[]
-  soundName      String
-  filterName     FilterName[]
-  description    String
-  latitude       Float
-  longitude      Float
-  place          String
-  created_at     DateTime         @default(now())
-}
+// model Template {
+//   id             Int              @id @default(autoincrement())
+//   user_id        Int
+//   user           User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+//   media_type     String           @default("TEMPLATE")
+//   transitionData TransitionData[]
+//   soundName      String
+//   filterName     FilterName[]
+//   description    String
+//   latitude       Float
+//   longitude      Float
+//   place          String
+//   created_at     DateTime         @default(now())
+// }

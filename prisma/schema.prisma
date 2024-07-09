@@ -14,31 +14,31 @@ datasource db {
 }
 
 model User {
-  id               Int       @id @default(autoincrement())
-  username         String?   @unique
-  phone            String?   @unique
-  password         String
-  email            String?   @unique
-  image            String?
-  background_image String?
-  gender           Int? // 0 = female, 1 = male
-  date_of_birth    String?
-  bio              String?
-  emergency_name   String?
-  emergency_phone  String?
-  latitude         Float?
-  longitude        Float?
-  is_verified      Boolean   @default(false)
-  created_at       DateTime  @default(now())
-  updated_at       DateTime  @updatedAt
-  otp              Otp?
-  trips            Trip[]
-  expense          Expense[]
-  userReferralCode String?
-  referredByCode   String?
-  status           Boolean   @default(false)
-  typeOfTraveller  Int?      @default(1) // 0 = solo, 1 = group
-  visible          Boolean   @default(true)
+  id                Int        @id @default(autoincrement())
+  username          String?    @unique
+  phone             String?    @unique
+  password          String
+  email             String?    @unique
+  image             String?
+  background_image  String?
+  gender            Int? // 0 = female, 1 = male
+  date_of_birth     String?
+  bio               String?
+  emergency_name    String?
+  emergency_phone   String?
+  latitude          Float?
+  longitude         Float?
+  is_verified       Boolean    @default(false)
+  created_at        DateTime   @default(now())
+  updated_at        DateTime   @updatedAt
+  otp               Otp?
+  trips             Trip[]
+  expense           Expense[]
+  userReferralCode  String?
+  referredByCode    String?
+  status            Boolean    @default(false)
+  typeOfTraveller   Int?       @default(1) // 0 = solo, 1 = group
+  visible           Boolean    @default(true)
   registrationToken String?
 
   post            Post[]
@@ -422,4 +422,38 @@ model ServiceOptions {
   id         Int      @id @default(autoincrement())
   name       String
   created_at DateTime @default(now())
+}
+
+model TransitionData {
+  id             Int      @id @default(autoincrement())
+  transitionType String
+  imageurl       String
+  mediaType      String   @default("image")
+  templateId     Int
+  template       Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+model FilterName {
+  id         Int      @id @default(autoincrement())
+  name       String
+  t1         String
+  t2         String
+  t3         String
+  t4         String
+  t5         String
+  t6         String
+  templateId Int
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+model Template {
+  id             Int              @id @default(autoincrement())
+  transitionData TransitionData[]
+  soundName      String
+  filterName     FilterName[]
+  description    String
+  latitude       Float
+  longitude      Float
+  place          String
+  created_at     DateTime         @default(now())
 }

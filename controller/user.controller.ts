@@ -79,7 +79,12 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
             //@ts-ignore
             fetchPosts[i].isLiked = isLiked ? true : false
         }
-        return res.status(200).send({ status: 200, message: 'Ok', posts: fetchPosts })
+        const fetchTemplates = await prisma.template.findMany({orderBy: {created_at: 'desc'}})
+        const mergedPosts = [...fetchPosts, ...fetchTemplates]
+        const sortedPosts = mergedPosts.sort((a, b) => {
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        })
+        return res.status(200).send({ status: 200, message: 'Ok', posts: sortedPosts })
     } catch (err) {
         return next(err)
     }

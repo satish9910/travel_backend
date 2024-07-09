@@ -27,6 +27,7 @@ import forumRouter from './routes/forum.routes'
 import messageRouter from './routes/message.routes'
 import SuperAdminRouter from './routes/superadmin.routes'
 import * as admin from 'firebase-admin';
+import TemplateRouter from './routes/template.routes'
 
 
 app.use(express.static('public'))
@@ -131,6 +132,7 @@ app.use('/forum', middleware.AuthMiddleware, forumRouter)
 app.use('/message', middleware.AuthMiddleware, messageRouter)
 // @ts-ignore
 app.use('/superAdmin', SuperAdminRouter)
+app.use('/template', TemplateRouter)
 
 export const sendNotification = async (registrationToken: string, payload: { title: string, body: string }) => {
     try {

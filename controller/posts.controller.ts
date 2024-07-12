@@ -7,7 +7,20 @@ const prisma = new PrismaClient()
 export const CreatePost = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const body = req.body
-    const { filterName, transitionData, soundName } = body
+    if(!body.soundName){
+        const post = await prisma.post.create({
+            data: {
+                image: body.image,
+                description: body.description,
+                user_id: user.id,
+                media_type: body.media_type,
+                latitude: body.latitude,
+                longitude: body.longitude,
+                place: body.place,
+            },
+        })
+        return res.status(200).send({ status: 201, message: 'Created', post: post })
+    }
     const post = await prisma.post.create({
         data: {
             image: body.image,
@@ -17,20 +30,20 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
             latitude: body.latitude,
             longitude: body.longitude,
             place: body.place,
-            soundName: soundName,
+            soundName: body.soundName,
             filterName: {
                 create: {
-                    name: filterName.name,
-                    t1: filterName.t1,
-                    t2: filterName.t2,
-                    t3: filterName.t3,
-                    t4: filterName.t4,
-                    t5: filterName.t5,
-                    t6: filterName.t6
+                    name: body.filterName.name,
+                    t1: body.filterName.t1,
+                    t2: body.filterName.t2,
+                    t3: body.filterName.t3,
+                    t4: body.filterName.t4,
+                    t5: body.filterName.t5,
+                    t6: body.filterName.t6
                 }
             },
             transitionData: {
-                create: transitionData.map((td: any) => ({
+                create: body.transitionData.map((td: any) => ({
                     transitionType: td.transitionType,
                     imageurl: td.imageurl,
                     mediaType: td.mediaType

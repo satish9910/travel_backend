@@ -55,7 +55,7 @@ export const GetTripExpenses = async (req: ExtendedRequest, res: Response, next:
 
 export const getEachTripsExpenses = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
-    const trips = await prisma.trip.findMany({
+    const normal_trips = await prisma.trip.findMany({
         where: { user_id: user.id },
         include: {
             service: {
@@ -66,6 +66,18 @@ export const getEachTripsExpenses = async (req: ExtendedRequest, res: Response, 
             }
         }
     })
+    const custom_trips = await prisma.customTrip.findMany({
+        where: { user_id: user.id },
+        include: {
+            service: {
+                select: {
+                    name: true,
+                    images: true
+                }
+            }
+        }
+    })
+    const trips = [...normal_trips, ...custom_trips]
     let tripExpenses = []
     for (let i = 0; i < trips.length; i++) {
         const expenses = await prisma.expense.findMany({

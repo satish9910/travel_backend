@@ -84,5 +84,30 @@ export const getSpecificDestination = async (req: ExtendedRequest, res: Response
 
 }
 
-const destinationController = { createDestination, getDestinations, deleteDestination, getSpecificDestination }
+const fetchAddressPredictions = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const address = req.query.address;
+    const apiUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?key=AIzaSyAyu-6Pv7RaiohWH1bWpQqwXbx7roNG_GA&input=${address}`;
+    try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        return res.status(200).send(data);
+    } catch (error) {
+        console.error('Error fetching address predictions: ', error);
+    }
+};
+
+const getLatLong = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const description = req.query.description;
+    try {
+        const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${description}&key=AIzaSyAyu-6Pv7RaiohWH1bWpQqwXbx7roNG_GA`;
+        const response = await fetch(geocodeUrl);
+        const data = await response.json();
+        const latLong = data.results[0].geometry.location;
+        return res.status(200).send(latLong);
+    } catch (error) {
+        console.error('Error fetching geocode data: ', error);
+    }
+};
+
+const destinationController = { createDestination, getDestinations, deleteDestination, getSpecificDestination, fetchAddressPredictions, getLatLong }
 export default destinationController

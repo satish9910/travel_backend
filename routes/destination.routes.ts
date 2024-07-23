@@ -13,6 +13,10 @@ DestinationRouter
     .get('/', destinationController.getDestinations)
     //@ts-ignore
     .delete('/:id', middleware.superAdminAuthMiddleware, destinationController.deleteDestination)
+    //@ts-ignore
+    .get('/search/destination', destinationController.fetchAddressPredictions)
+    //@ts-ignore
+    .get('/search/destination/lat-long', destinationController.getLatLong)
 
     
 export default DestinationRouter

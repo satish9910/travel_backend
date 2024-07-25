@@ -71,7 +71,6 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
                     },
                 },
                 filterName: true,
-                transitionData: true
             },
             orderBy: { created_at: 'desc' },
             skip: skip,

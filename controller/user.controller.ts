@@ -4,9 +4,9 @@ import { PrismaClient } from '@prisma/client'
 import helper from '../utils/helpers'
 const prisma = new PrismaClient()
 import crypto from 'node:crypto'
-import { GetObjectCommand } from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { s3 } from '../app'
+
 
 const get_all_users = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const query = req.query
@@ -83,17 +83,6 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
             //@ts-ignore
             fetchPosts[i].isLiked = isLiked ? true : false
         }
-        for (const post of fetchPosts) {
-            if (post.image) {
-                const getObjectParams = {
-                    Bucket: process.env.BUCKET_NAME!,
-                    Key: post.image,
-                }
-                const command = new GetObjectCommand(getObjectParams)
-                const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
-                post.image = url
-            }
-        }
         return res.status(200).send({ status: 200, message: 'Ok', posts: fetchPosts })
     } catch (err) {
         return next(err)
@@ -108,7 +97,17 @@ const get_user_details = (req: ExtendedRequest, res: Response, _next: NextFuncti
 
 const update_user = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
-    let { username, gender, date_of_birth, bio, emergency_name, emergency_phone, typeOfTraveller, image, background_image } = req.body
+    const randomImageName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
+    const imageName = randomImageName()
+    const params = {
+        Bucket: process.env.BUCKET_NAME!,
+        Key: imageName,
+        Body: req.file?.buffer,
+        ContentType: req.file?.mimetype,
+    }
+    const command = new PutObjectCommand(params)
+    await s3.send(command)
+    let { username, gender, date_of_birth, bio, emergency_name, emergency_phone, typeOfTraveller, background_image } = req.body
     if (gender) {
         gender = Number(gender)
         if (Number.isNaN(gender)) {
@@ -128,13 +127,6 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
                 .send({ status: 400, error: 'Bad Request', error_description: 'Invalid type of traveller' })
         }
     }
-
-    // let imagePath: string | undefined
-    // if (req.file) {
-    //     imagePath = req.file.filename
-    // }
-    // let imageUrl
-    // if (imagePath) imageUrl = helper.imageUrlGen(imagePath)
     try {
         const updatedUser = await prisma.user.update({
             where: { id: user.id },
@@ -143,7 +135,7 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
                 gender,
                 date_of_birth,
                 bio,
-                image,
+                image: `https://ezio.s3.eu-north-1.amazonaws.com/${imageName}`,
                 background_image,
                 emergency_name,
                 emergency_phone,
@@ -313,17 +305,6 @@ const feedByPlace = async (req: ExtendedRequest, res: Response, next: NextFuncti
             })
             //@ts-ignore
             posts[i].isLiked = isLiked ? true : false
-        }
-        for (const post of posts) {
-            if (post.image) {
-                const getObjectParams = {
-                    Bucket: process.env.BUCKET_NAME!,
-                    Key: post.image,
-                }
-                const command = new GetObjectCommand(getObjectParams)
-                const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
-                post.image = url
-            }
         }
         return res.status(200).send({ status: 200, message: 'Ok', posts: posts })
     } catch (err) {

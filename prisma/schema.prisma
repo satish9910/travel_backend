@@ -429,15 +429,6 @@ model ServiceOptions {
   created_at DateTime @default(now())
 }
 
-// model TransitionData {
-//   id             Int      @id @default(autoincrement())
-//   transitionType String?
-//   imageurl       String
-//   mediaType      String   @default("image")
-//   postId        Int
-//   post          Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-// }
-
 model FilterName {
   id         Int      @id @default(autoincrement())
   name       String
@@ -451,17 +442,3 @@ model FilterName {
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
-// model Template {
-//   id             Int              @id @default(autoincrement())
-//   user_id        Int
-//   user           User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
-//   media_type     String           @default("TEMPLATE")
-//   transitionData TransitionData[]
-//   soundName      String
-//   filterName     FilterName[]
-//   description    String
-//   latitude       Float
-//   longitude      Float
-//   place          String
-//   created_at     DateTime         @default(now())
-// }

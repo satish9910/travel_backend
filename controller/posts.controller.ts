@@ -2,8 +2,7 @@ import type { Response, NextFunction } from 'express'
 import { ExtendedRequest } from '../utils/middleware'
 import helper from '../utils/helpers'
 import { PrismaClient } from '@prisma/client'
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import crypto from 'crypto'
 import { s3 } from '../app'
 const prisma = new PrismaClient()
@@ -26,7 +25,7 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
     if (!body.soundName) {
         const post = await prisma.post.create({
             data: {
-                image: imageName,
+                image: `https://ezio.s3.eu-north-1.amazonaws.com/${imageName}`,
                 description: body.description,
                 user_id: user.id,
                 media_type: body.media_type,
@@ -39,7 +38,7 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
     }
     const post = await prisma.post.create({
         data: {
-            image: imageName,
+            image: `https://ezio.s3.eu-north-1.amazonaws.com/${imageName}`,
             description: body.description,
             user_id: user.id,
             media_type: body.media_type,
@@ -57,14 +56,7 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
                     t5: body.filterName.t5,
                     t6: body.filterName.t6,
                 },
-            },
-            // transitionData: {
-            //     create: body.transitionData.map((td: any) => ({
-            //         transitionType: td.transitionType,
-            //         imageurl: td.imageurl,
-            //         mediaType: td.mediaType
-            //     }))
-            // },
+            }
         },
     })
     return res.status(200).send({ status: 201, message: 'Created', post: post })
@@ -125,17 +117,6 @@ export const GetOnlyVideos = async (req: ExtendedRequest, res: Response, _next: 
             //@ts-ignore
             fetchPosts[i].isLiked = isLiked ? true : false
         }
-        for (const post of fetchPosts) {
-            if (post.image) {
-                const getObjectParams = {
-                    Bucket: process.env.BUCKET_NAME!,
-                    Key: post.image,
-                }
-                const command = new GetObjectCommand(getObjectParams)
-                const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
-                post.image = url
-            }
-        }
         return res.status(200).send({ status: 200, message: 'Ok', posts: fetchPosts })
     } catch (err) {
         return _next(err)
@@ -146,18 +127,6 @@ export const GetPosts = async (req: ExtendedRequest, res: Response, _next: NextF
     try {
         const user = req.user
         const posts = await prisma.post.findMany({ where: { user_id: user.id }, orderBy: { created_at: 'desc' } })
-
-        for (const post of posts) {
-            if (post.image) {
-                const getObjectParams = {
-                    Bucket: process.env.BUCKET_NAME!,
-                    Key: post.image,
-                }
-                const command = new GetObjectCommand(getObjectParams)
-                const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
-                post.image = url
-            }
-        }
         return res.status(200).send({ status: 200, message: 'Ok', posts })
     } catch (err) {
         return _next(err)
@@ -196,17 +165,6 @@ export const GetPostsByUserId = async (req: ExtendedRequest, res: Response, _nex
             },
         },
     })
-    for (const post of posts) {
-        if (post.image) {
-            const getObjectParams = {
-                Bucket: process.env.BUCKET_NAME!,
-                Key: post.image,
-            }
-            const command = new GetObjectCommand(getObjectParams)
-            const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
-            post.image = url
-        }
-    }
     const user = await prisma.user.findFirst({
         where: { id: id },
         include: {
@@ -288,15 +246,6 @@ export const GetSpecificPost = async (req: ExtendedRequest, res: Response, next:
             },
         },
     })
-    if (post?.image) {
-        const getObjectParams = {
-            Bucket: process.env.BUCKET_NAME!,
-            Key: post.image,
-        }
-        const command = new GetObjectCommand(getObjectParams)
-        const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
-        post.image = url
-    }
     const follower_count = await prisma.follows.count({ where: { user_id: post?.user_id } })
     const trip_count = await prisma.trip.count({ where: { user_id: post?.user_id } })
     if (!post) {

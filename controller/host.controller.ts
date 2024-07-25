@@ -2,6 +2,9 @@ import type { Response, NextFunction } from 'express'
 import { ExtendedRequest } from '../utils/middleware'
 import { PrismaClient } from '@prisma/client'
 import helper from '../utils/helpers'
+import { PutObjectCommand } from '@aws-sdk/client-s3'
+import { s3 } from '../app'
+import crypto from 'crypto'
 const prisma = new PrismaClient()
 
 const getHostedTrips = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
@@ -57,6 +60,16 @@ const getHostProfile = async (req: ExtendedRequest, res: Response, next: NextFun
 
 const updateHostProfile = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const hostId: string | number = req.params.id
+    const randomImageName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
+    const imageName = randomImageName()
+    const params = {
+        Bucket: process.env.BUCKET_NAME!,
+        Key: imageName,
+        Body: req.file?.buffer,
+        ContentType: req.file?.mimetype,
+    }
+    const command = new PutObjectCommand(params)
+    await s3.send(command)
 
     const imageUrl = req.body.photo
     if (!hostId) {

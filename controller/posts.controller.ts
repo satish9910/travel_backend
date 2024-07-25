@@ -2,15 +2,31 @@ import type { Response, NextFunction } from 'express'
 import { ExtendedRequest } from '../utils/middleware'
 import helper from '../utils/helpers'
 import { PrismaClient } from '@prisma/client'
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import crypto from 'crypto'
+import { s3 } from '../app'
 const prisma = new PrismaClient()
+import dotenv from 'dotenv'
+dotenv.config()
 
 export const CreatePost = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const body = req.body
-    if(!body.soundName){
+    const randomImageName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
+    const imageName = randomImageName()
+    const params = {
+        Bucket: process.env.BUCKET_NAME!,
+        Key: imageName,
+        Body: req.file?.buffer,
+        ContentType: req.file?.mimetype,
+    }
+    const command = new PutObjectCommand(params)
+    await s3.send(command)
+    if (!body.soundName) {
         const post = await prisma.post.create({
             data: {
-                image: body.image,
+                image: imageName,
                 description: body.description,
                 user_id: user.id,
                 media_type: body.media_type,
@@ -23,7 +39,7 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
     }
     const post = await prisma.post.create({
         data: {
-            image: body.image,
+            image: imageName,
             description: body.description,
             user_id: user.id,
             media_type: body.media_type,
@@ -39,16 +55,16 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
                     t3: body.filterName.t3,
                     t4: body.filterName.t4,
                     t5: body.filterName.t5,
-                    t6: body.filterName.t6
-                }
+                    t6: body.filterName.t6,
+                },
             },
-            transitionData: {
-                create: body.transitionData.map((td: any) => ({
-                    transitionType: td.transitionType,
-                    imageurl: td.imageurl,
-                    mediaType: td.mediaType
-                }))
-            },
+            // transitionData: {
+            //     create: body.transitionData.map((td: any) => ({
+            //         transitionType: td.transitionType,
+            //         imageurl: td.imageurl,
+            //         mediaType: td.mediaType
+            //     }))
+            // },
         },
     })
     return res.status(200).send({ status: 201, message: 'Created', post: post })
@@ -82,7 +98,7 @@ export const GetOnlyVideos = async (req: ExtendedRequest, res: Response, _next: 
                         id: true,
                         username: true,
                         image: true,
-                        status: true
+                        status: true,
                     },
                 },
                 comment: {
@@ -93,9 +109,9 @@ export const GetOnlyVideos = async (req: ExtendedRequest, res: Response, _next: 
                                 username: true,
                                 image: true,
                                 status: true,
-                            }
-                        }
-                    }
+                            },
+                        },
+                    },
                 },
             },
             orderBy: { created_at: 'desc' },
@@ -109,6 +125,17 @@ export const GetOnlyVideos = async (req: ExtendedRequest, res: Response, _next: 
             //@ts-ignore
             fetchPosts[i].isLiked = isLiked ? true : false
         }
+        for (const post of fetchPosts) {
+            if (post.image) {
+                const getObjectParams = {
+                    Bucket: process.env.BUCKET_NAME!,
+                    Key: post.image,
+                }
+                const command = new GetObjectCommand(getObjectParams)
+                const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+                post.image = url
+            }
+        }
         return res.status(200).send({ status: 200, message: 'Ok', posts: fetchPosts })
     } catch (err) {
         return _next(err)
@@ -116,16 +143,31 @@ export const GetOnlyVideos = async (req: ExtendedRequest, res: Response, _next: 
 }
 
 export const GetPosts = async (req: ExtendedRequest, res: Response, _next: NextFunction) => {
-    const user = req.user
-    const posts = await prisma.post.findMany({ where: { user_id: user.id } })
+    try {
+        const user = req.user
+        const posts = await prisma.post.findMany({ where: { user_id: user.id }, orderBy: { created_at: 'desc' } })
 
-    return res.status(200).send({ status: 200, message: 'Ok', posts })
+        for (const post of posts) {
+            if (post.image) {
+                const getObjectParams = {
+                    Bucket: process.env.BUCKET_NAME!,
+                    Key: post.image,
+                }
+                const command = new GetObjectCommand(getObjectParams)
+                const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+                post.image = url
+            }
+        }
+        return res.status(200).send({ status: 200, message: 'Ok', posts })
+    } catch (err) {
+        return _next(err)
+    }
 }
 
 export const GetPostsByUserId = async (req: ExtendedRequest, res: Response, _next: NextFunction) => {
     const id = req.body.userId
     const isFollowing = await prisma.follows.findFirst({
-        where: { user_id:id, follower_id: req.user.id },
+        where: { user_id: id, follower_id: req.user.id },
     })
     const isRequested = await prisma.followRequest.findFirst({
         where: { user_id: id, follower_id: req.user.id },
@@ -154,6 +196,17 @@ export const GetPostsByUserId = async (req: ExtendedRequest, res: Response, _nex
             },
         },
     })
+    for (const post of posts) {
+        if (post.image) {
+            const getObjectParams = {
+                Bucket: process.env.BUCKET_NAME!,
+                Key: post.image,
+            }
+            const command = new GetObjectCommand(getObjectParams)
+            const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+            post.image = url
+        }
+    }
     const user = await prisma.user.findFirst({
         where: { id: id },
         include: {
@@ -187,27 +240,25 @@ export const GetPostsByUserId = async (req: ExtendedRequest, res: Response, _nex
             },
             trips: {
                 include: {
-                    service: true
-                }
-            }
+                    service: true,
+                },
+            },
         },
     })
-    delete (user as any).password;
-    const follower_count = await prisma.follows.count({ where: { user_id: id } });
+    delete (user as any).password
+    const follower_count = await prisma.follows.count({ where: { user_id: id } })
     const trip_count = await prisma.trip.count({ where: { user_id: id } })
 
-    return res
-        .status(200)
-        .send({
-            status: 200,
-            message: 'Ok',
-            posts,
-            user_follower_count: follower_count,
-            user_trip_count: trip_count,
-            user: user,
-            isFollowing: isFollowing ? true : false,
-            isRequested: isRequested ? true : false,
-        })
+    return res.status(200).send({
+        status: 200,
+        message: 'Ok',
+        posts,
+        user_follower_count: follower_count,
+        user_trip_count: trip_count,
+        user: user,
+        isFollowing: isFollowing ? true : false,
+        isRequested: isRequested ? true : false,
+    })
 }
 
 export const GetSpecificPost = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
@@ -237,6 +288,15 @@ export const GetSpecificPost = async (req: ExtendedRequest, res: Response, next:
             },
         },
     })
+    if (post?.image) {
+        const getObjectParams = {
+            Bucket: process.env.BUCKET_NAME!,
+            Key: post.image,
+        }
+        const command = new GetObjectCommand(getObjectParams)
+        const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+        post.image = url
+    }
     const follower_count = await prisma.follows.count({ where: { user_id: post?.user_id } })
     const trip_count = await prisma.trip.count({ where: { user_id: post?.user_id } })
     if (!post) {
@@ -268,9 +328,19 @@ export const DeletePost = async (req: ExtendedRequest, res: Response, next: Next
     }
 
     try {
+        const post = await prisma.post.findFirst({ where: { id: postId, user_id: req.user.id } })
+        if (!post) {
+            return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Post not found.' })
+        }
+        if(post.image){
+            const params = {
+                Bucket: process.env.BUCKET_NAME!,
+                Key: post.image,
+            }
+            const command = new DeleteObjectCommand(params)
+            await s3.send(command)
+        }
         const deleted_post = await prisma.post.delete({ where: { id: postId, user_id: req.user.id } })
-        // TODO delete image stored locally
-        // fs.
         return res.status(200).send({ status: 202, message: 'Accepted', post: deleted_post })
     } catch (err) {
         console.log(err)

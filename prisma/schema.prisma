@@ -112,7 +112,7 @@ model Post {
   place       String?
   thumbnail   String?
   postReport  PostReport[]
-  transitionData TransitionData[]
+  // transitionData TransitionData[]
   soundName      String?
   filterName     FilterName[]
 
@@ -429,14 +429,14 @@ model ServiceOptions {
   created_at DateTime @default(now())
 }
 
-model TransitionData {
-  id             Int      @id @default(autoincrement())
-  transitionType String
-  imageurl       String
-  mediaType      String   @default("image")
-  postId        Int
-  post          Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-}
+// model TransitionData {
+//   id             Int      @id @default(autoincrement())
+//   transitionType String?
+//   imageurl       String
+//   mediaType      String   @default("image")
+//   postId        Int
+//   post          Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+// }
 
 model FilterName {
   id         Int      @id @default(autoincrement())

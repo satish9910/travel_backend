@@ -4,6 +4,9 @@ import { PrismaClient } from '@prisma/client'
 import helper from '../utils/helpers'
 const prisma = new PrismaClient()
 import crypto from 'node:crypto'
+import { GetObjectCommand } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { s3 } from '../app'
 
 const get_all_users = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const query = req.query
@@ -81,11 +84,17 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
             //@ts-ignore
             fetchPosts[i].isLiked = isLiked ? true : false
         }
-        // const fetchTemplates = await prisma.template.findMany({orderBy: {created_at: 'desc'}, include: {user: {select: {id: true, username: true, image: true, status: true}}, filterName: true, transitionData: true}})
-        // const mergedPosts = [...fetchPosts, ...fetchTemplates]
-        // const sortedPosts = mergedPosts.sort((a, b) => {
-        //     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        // })
+        for (const post of fetchPosts) {
+            if (post.image) {
+                const getObjectParams = {
+                    Bucket: process.env.BUCKET_NAME!,
+                    Key: post.image,
+                }
+                const command = new GetObjectCommand(getObjectParams)
+                const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+                post.image = url
+            }
+        }
         return res.status(200).send({ status: 200, message: 'Ok', posts: fetchPosts })
     } catch (err) {
         return next(err)
@@ -305,6 +314,17 @@ const feedByPlace = async (req: ExtendedRequest, res: Response, next: NextFuncti
             })
             //@ts-ignore
             posts[i].isLiked = isLiked ? true : false
+        }
+        for (const post of posts) {
+            if (post.image) {
+                const getObjectParams = {
+                    Bucket: process.env.BUCKET_NAME!,
+                    Key: post.image,
+                }
+                const command = new GetObjectCommand(getObjectParams)
+                const url = await getSignedUrl(s3, command, { expiresIn: 3600 })
+                post.image = url
+            }
         }
         return res.status(200).send({ status: 200, message: 'Ok', posts: posts })
     } catch (err) {

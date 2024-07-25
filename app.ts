@@ -16,8 +16,6 @@ import ExpenseRouter from './routes/expense.routes'
 import cors from 'cors'
 import cron from 'node-cron'
 import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
-const app = express()
 import morgan from 'morgan'
 import DestinationRouter from './routes/destination.routes'
 import HostRouter from './routes/host.routes'
@@ -28,8 +26,24 @@ import messageRouter from './routes/message.routes'
 import SuperAdminRouter from './routes/superadmin.routes'
 import * as admin from 'firebase-admin';
 // import TemplateRouter from './routes/template.routes'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 
+const bucketName = process.env.BUCKET_NAME
+const bucketRegion = process.env.BUCKET_REGION
+const accessKey = process.env.ACCESS_KEY
+const secretAccessKey = process.env.SECRET_ACCESS_KEY
 
+//@ts-ignore
+export const s3 = new S3Client({
+    credentials: {
+        accessKeyId: accessKey,
+        secretAccessKey: secretAccessKey,
+    },
+    region: bucketRegion,
+});
+
+const prisma = new PrismaClient()
+const app = express()
 app.use(express.static('public'))
 app.use(express.json())
 // app.use(express.urlencoded({ extended: true }));

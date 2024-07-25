@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import postController from '../controller/posts.controller'
-// import { upload } from '..'
+import { upload } from '..'
 // import middleware from '../utils/middleware'
 const postRouter = Router()
 
@@ -13,8 +13,8 @@ postRouter
     //@ts-ignore
     .get('/:id', postController.GetSpecificPost)
     //@ts-ignore
-    .post('/', postController.CreatePost)
-    // .post('/', upload.single('image'), postController.CreatePost)
+    // .post('/', postController.CreatePost)
+    .post('/', upload.single('image'), postController.CreatePost)
     //@ts-ignore
     .delete('/:id', postController.DeletePost)
     //@ts-ignore

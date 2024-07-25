@@ -5,6 +5,7 @@ const authRouter = Router()
 
 authRouter.post('/login', authController.Login)
 authRouter.post('/signup', authController.Signup)
+//@ts-ignore
 authRouter.post('/forgot', authController.ForgotPassword)
 authRouter.post('/sendotp', authController.SendOtp)
 authRouter.post('/verify', authController.VerifyOtp)

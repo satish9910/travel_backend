@@ -28,7 +28,6 @@ const Login = async (req: Request, res: Response, next: NextFunction) => {
     )
     hash_password = hash_password.toString('hex')
     try {
-
         const userDetails = await prisma.user.findUnique({
             where: { username: body.username, password: hash_password },
         })
@@ -53,14 +52,30 @@ const Login = async (req: Request, res: Response, next: NextFunction) => {
         return res.status(200).send({
             status: 200,
             error: 'Invalid credentials.',
-            error_description: (err as any).message
+            error_description: (err as any).message,
         })
     }
 }
 
 // TODO Incomplete
-const ForgotPassword = async (req: Request, res: Response) => {
-    return res.status(200).send({ status: 200, error: 'incomplete route' })
+const ForgotPassword = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try {
+        const { email, password } = req.body
+        if (!helper.isValidatePaylod(req.body, ['email', 'password'])) {
+            return res
+                .status(200)
+                .send({ status: 400, error: 'Invalid Payload', error_description: 'email, password are required.' })
+        }
+        let hash_password: string | Buffer = crypto.pbkdf2Sync(password, SALT_ROUND, ITERATION, KEYLENGTH, DIGEST_ALGO)
+        hash_password = hash_password.toString('hex')
+        await prisma.user.update({
+            where: { email },
+            data: { password: hash_password },
+        })
+        return res.status(200).send({ status: 200, message: 'Ok' })
+    } catch (err) {
+        return next(err)
+    }
 }
 
 const Signup = async (req: Request, res: Response, next: NextFunction) => {
@@ -105,39 +120,41 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
                     },
                 })
                 .then((createdUser) => {
-                    const userId = createdUser.id;
+                    const userId = createdUser.id
                     return prisma.follows.create({
-                        data: { 
-                            user_id: 3, 
-                            follower_id: userId 
-                        }
-                    });
+                        data: {
+                            user_id: 3,
+                            follower_id: userId,
+                        },
+                    })
                 })
                 .then((follow) => {
-                    return res.status(201).send({ status: 201, message: 'Created' });
+                    return res.status(201).send({ status: 201, message: 'Created' })
                 })
                 .catch((err) => {
-                    return next(err);
-                });
+                    return next(err)
+                })
         }
     })
 }
 
 const SendOtp = async (req: Request, res: Response, _next: NextFunction) => {
-    if (!helper.isValidatePaylod(req.body, ['phone'])) {
+    if (!helper.isValidatePaylod(req.body, ['email'])) {
         return res.status(200).send({ status: 400, error: 'Invalid Payload', error_description: 'phone requried' })
     }
-    const { phone } = req.body
-    // const otp = Math.floor(10000 + Math.random() * 90000)
-    const otp = 1234
-    const user = await prisma.user.findFirst({ where: { phone } })
+    const { email } = req.body
+    const otp = Math.floor(10000 + Math.random() * 90000)
+    // const otp = 1234
+    const user = await prisma.user.findFirst({ where: { email } })
+    console.log(user)
+
     if (!user) return res.status(200).send({ status: 404, error: 'Not found', error_description: 'user not found' })
     const previousSendOtp = await prisma.otp.findUnique({ where: { user_id: user.id } })
     const userid = user.id
     if (!previousSendOtp) {
         try {
             const otpData = await prisma.otp.create({ data: { user_id: userid, otp: otp } })
-            // helper.sendMail(phone , 'TravelApp Acco-unt Verification', `Your OTP is ${otp}`)
+            helper.sendMail(email, 'EzioTravels Account Verification', `Your OTP is ${otp}`)
         } catch (err) {
             return _next(err)
         }
@@ -145,7 +162,7 @@ const SendOtp = async (req: Request, res: Response, _next: NextFunction) => {
     } else {
         try {
             const otpData = await prisma.otp.update({ where: { user_id: userid }, data: { otp: otp } })
-            // helper.sendMail(phone , 'TravelApp Account Verification', `Your OTP is ${otp}`)
+            helper.sendMail(email, 'EzioTravels Account Verification', `Your OTP is ${otp}`)
         } catch (err) {
             return _next(err)
         }
@@ -162,20 +179,20 @@ const SendOtp = async (req: Request, res: Response, _next: NextFunction) => {
  * @returns responses
  */
 const VerifyOtp = async (req: Request, res: Response, next: NextFunction) => {
-    const { phone, otp } = req.body
-    if (!helper.isValidatePaylod(req.body, ['phone', 'otp'])) {
+    const { email, otp } = req.body
+    if (!helper.isValidatePaylod(req.body, ['email', 'otp'])) {
         return res
             .status(200)
-            .send({ status: 400, error: 'Invalid payload', error_description: 'phone, otp are required.' })
+            .send({ status: 400, error: 'Invalid payload', error_description: 'email, otp are required.' })
     }
-    const user = await prisma.user.findFirst({ where: { phone } })
+    const user = await prisma.user.findFirst({ where: { email } })
     if (user?.is_verified) {
         return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'User already verified' })
     }
     if (!user)
         return res
             .status(200)
-            .send({ status: 400, error: 'user not found.', error_description: `No user with ${phone}` })
+            .send({ status: 400, error: 'user not found.', error_description: `No user with ${email}` })
     const otpData = await prisma.otp.findUnique({ where: { user_id: user.id } })
     if (!otpData) {
         return res.status(200).send({ error: 'Bad Request', error_description: 'OTP is not valid.' })
@@ -187,7 +204,7 @@ const VerifyOtp = async (req: Request, res: Response, next: NextFunction) => {
         }
         try {
             const updatedUser = await prisma.user.update({ where: { id: user.id }, data: { is_verified: true } })
-            const token = jwt.sign({ phone: user.phone }, process.env.JWT_SECRET!, {
+            const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET!, {
                 expiresIn: '7d',
             })
             return res.status(200).send({ status: 200, message: 'Ok', user: updatedUser, token })
@@ -269,7 +286,7 @@ const socialLogin = async (req: Request, res: Response, next: NextFunction) => {
             status: 200,
             message: 'Ok',
             user: userDetails,
-            token
+            token,
         })
     }
     return socialSignUp(req, res, next, email, password)
@@ -305,20 +322,20 @@ const socialSignUp = async (req: Request, res: Response, next: NextFunction, ema
                     },
                 })
                 .then((createdUser) => {
-                    const userId = createdUser.id;
+                    const userId = createdUser.id
                     return prisma.follows.create({
-                        data: { 
-                            user_id: 2, 
-                            follower_id: userId 
-                        }
-                    });
+                        data: {
+                            user_id: 2,
+                            follower_id: userId,
+                        },
+                    })
                 })
                 .then((follow) => {
-                    return res.status(201).send({ status: 201, message: 'Created', token });
+                    return res.status(201).send({ status: 201, message: 'Created', token })
                 })
                 .catch((err) => {
-                    return next(err);
-                });
+                    return next(err)
+                })
         }
     })
 }
@@ -356,8 +373,7 @@ const superAdminLogin = async (req: Request, res: Response, next: NextFunction) 
         },
         token: token,
     })
-
 }
 
-const authController = { Login, ForgotPassword, Signup, SendOtp, VerifyOtp, HostLogin, socialLogin, superAdminLogin}
+const authController = { Login, ForgotPassword, Signup, SendOtp, VerifyOtp, HostLogin, socialLogin, superAdminLogin }
 export default authController

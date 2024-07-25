@@ -7,7 +7,6 @@ import crypto from 'node:crypto'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { s3 } from '../app'
 
-
 const get_all_users = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const query = req.query
     const { page = 1, limit = 10 } = query
@@ -55,7 +54,7 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
                         id: true,
                         username: true,
                         image: true,
-                        status: true
+                        status: true,
                     },
                 },
                 comment: {
@@ -66,7 +65,7 @@ const get_user_feed = async (req: ExtendedRequest, res: Response, next: NextFunc
                                 username: true,
                                 image: true,
                                 status: true,
-                            }
+                            },
                         },
                     },
                 },
@@ -107,7 +106,7 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
     }
     const command = new PutObjectCommand(params)
     await s3.send(command)
-    let { username, gender, date_of_birth, bio, emergency_name, emergency_phone, typeOfTraveller, background_image } = req.body
+    let { username, gender, date_of_birth, bio, emergency_name, emergency_phone, typeOfTraveller, background_image, email } = req.body
     if (gender) {
         gender = Number(gender)
         if (Number.isNaN(gender)) {
@@ -128,24 +127,46 @@ const update_user = async (req: ExtendedRequest, res: Response, next: NextFuncti
         }
     }
     try {
-        const updatedUser = await prisma.user.update({
-            where: { id: user.id },
-            data: {
-                username,
-                gender,
-                date_of_birth,
-                bio,
-                image: `https://ezio.s3.eu-north-1.amazonaws.com/${imageName}`,
-                background_image,
-                emergency_name,
-                emergency_phone,
-                typeOfTraveller,
-            },
-        })
-        delete (updatedUser as any).password
-        delete (updatedUser as any).emergency_name
-        delete (updatedUser as any).emergency_phone
-        return res.status(200).send({ status: 200, message: 'Ok', user: updatedUser })
+        if (req.file) {
+            const updatedUser = await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    username,
+                    gender,
+                    date_of_birth,
+                    bio,
+                    image: `https://ezio.s3.eu-north-1.amazonaws.com/${imageName}`,
+                    background_image,
+                    emergency_name,
+                    emergency_phone,
+                    typeOfTraveller,
+                    email
+                },
+            })
+            delete (updatedUser as any).password
+            delete (updatedUser as any).emergency_name
+            delete (updatedUser as any).emergency_phone
+            return res.status(200).send({ status: 200, message: 'Ok', user: updatedUser })
+        } else {
+            const updatedUser = await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    username,
+                    gender,
+                    date_of_birth,
+                    bio,
+                    background_image,
+                    emergency_name,
+                    emergency_phone,
+                    typeOfTraveller,
+                    email
+                },
+            })
+            delete (updatedUser as any).password
+            delete (updatedUser as any).emergency_name
+            delete (updatedUser as any).emergency_phone
+            return res.status(200).send({ status: 200, message: 'Ok', user: updatedUser })
+        }
     } catch (err) {
         return next(err)
     }
@@ -349,10 +370,12 @@ const getUsersByUsername = async (req: ExtendedRequest, res: Response, next: Nex
             longitude: user.longitude,
             followersCount: user.followers.length,
             isFollowing: user.followers.some((follow) => follow.follower_id === currentUserId),
-            isRequested: user.followRequest.some((request) => request.follower_id === currentUserId && request.status === 0),
+            isRequested: user.followRequest.some(
+                (request) => request.follower_id === currentUserId && request.status === 0
+            ),
             status: user.status,
-        })) 
-    
+        }))
+
         return res.status(200).send({ status: 200, message: 'Ok', users: usersWithFollowingInfo })
     } catch (err) {
         return next(err)
@@ -408,7 +431,7 @@ const blockUser = async (req: ExtendedRequest, res: Response, next: NextFunction
                 blocked_id: blocked_user_id,
             },
         })
-        
+
         return res.status(200).send({ status: 200, message: 'Ok', blockedUser: blockedUser })
     } catch (err) {
         return next(err)
@@ -499,13 +522,12 @@ const updateRegistrationToken = async (req: ExtendedRequest, res: Response, next
     } catch (err) {
         return next(err)
     }
-
 }
 
 const getNearbyUsers = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-    const user = req.user;
+    const user = req.user
 
-    const { latitude, longitude } = user;
+    const { latitude, longitude } = user
 
     const blockedUsers = await prisma.block.findMany({
         where: { user_id: user.id },
@@ -515,24 +537,26 @@ const getNearbyUsers = async (req: ExtendedRequest, res: Response, next: NextFun
     })
 
     const blockedUserIds = blockedUsers.map((user) => user.blocked_id)
-    
+
     if (!latitude || !longitude) {
-        return res.status(400).json({ status: 400, error: 'Bad Request', error_description: 'Latitude and Longitude are required' });
+        return res
+            .status(400)
+            .json({ status: 400, error: 'Bad Request', error_description: 'Latitude and Longitude are required' })
     }
-    try { 
+    try {
         const nearbyUsers = await prisma.user.findMany({
             where: {
                 AND: {
-                    NOT: { id: {in: blockedUserIds} }, 
-                    id: { not: user.id } ,
+                    NOT: { id: { in: blockedUserIds } },
+                    id: { not: user.id },
                     visible: true,
-                    latitude: { 
-                        gt: latitude - 0.45, 
-                        lt: latitude + 0.45 
+                    latitude: {
+                        gt: latitude - 0.45,
+                        lt: latitude + 0.45,
                     },
-                    longitude: { 
-                        gt: longitude - 0.45, 
-                        lt: longitude + 0.45 
+                    longitude: {
+                        gt: longitude - 0.45,
+                        lt: longitude + 0.45,
                     },
                 },
             },
@@ -543,25 +567,25 @@ const getNearbyUsers = async (req: ExtendedRequest, res: Response, next: NextFun
                 latitude: true,
                 longitude: true,
                 gender: true,
-                status: true
-            }
-        });
-        
-        return res.status(200).json({ status: 200, message: 'Ok', nearbyUsers });
+                status: true,
+            },
+        })
+
+        return res.status(200).json({ status: 200, message: 'Ok', nearbyUsers })
     } catch (err) {
-        return next(err);
+        return next(err)
     }
-};
+}
 
 const deleteAccount = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-    const user = req.user;
+    const user = req.user
     try {
         await prisma.user.delete({
-            where: { id: user.id }
-        });
-        return res.status(200).json({ status: 200, message: 'Account deleted successfully' });
+            where: { id: user.id },
+        })
+        return res.status(200).json({ status: 200, message: 'Account deleted successfully' })
     } catch (err) {
-        return next(err);
+        return next(err)
     }
 }
 
@@ -599,7 +623,7 @@ const changePassword = async (req: ExtendedRequest, res: Response, next: NextFun
     if (!user) {
         return res.status(200).send({ status: 404, error: 'Not Found', error_description: 'User not found.' })
     }
-    
+
     if (user.password !== hash_old_password) {
         return res.status(200).send({
             status: 400,
@@ -646,7 +670,7 @@ const rateService = async (req: ExtendedRequest, res: Response, next: NextFuncti
         await prisma.service.update({
             where: { id: service_id },
             data: {
-                rating : (service.rating + rating) / (service.rating_count + 1),
+                rating: (service.rating + rating) / (service.rating_count + 1),
                 rating_count: service.rating_count + 1,
             },
         })
@@ -666,12 +690,34 @@ const getUserFollowersFollowingById = async (req: ExtendedRequest, res: Response
             where: { id: userId },
             include: {
                 followers: {
-                    include: {follower: {select: {id: true, username: true, image: true, status: true, is_verified: true, followerRequest: {select: {status: true}}}}}
+                    include: {
+                        follower: {
+                            select: {
+                                id: true,
+                                username: true,
+                                image: true,
+                                status: true,
+                                is_verified: true,
+                                followerRequest: { select: { status: true } },
+                            },
+                        },
+                    },
                 },
                 follows: {
-                    include: {user: {select: {id: true, username: true, image: true, status: true, is_verified: true, followerRequest: {select: {status: true}}}}}
-                }
-            }
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                username: true,
+                                image: true,
+                                status: true,
+                                is_verified: true,
+                                followerRequest: { select: { status: true } },
+                            },
+                        },
+                    },
+                },
+            },
         })
         if (!user) {
             return res.status(200).send({ status: 404, error: 'Not Found', error_description: 'User not found.' })
@@ -681,7 +727,6 @@ const getUserFollowersFollowingById = async (req: ExtendedRequest, res: Response
     } catch (err) {
         return next(err)
     }
-
 }
 
 const submitKycDetails = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
@@ -705,10 +750,10 @@ const submitKycDetails = async (req: ExtendedRequest, res: Response, next: NextF
                 alternate_email: body.alternate_email,
                 document_type: body.document_type,
                 document: body.document,
-                user_id: user.id
-            }
+                user_id: user.id,
+            },
         })
-        await prisma.user.update({where: {id: user.id}, data: {kycStatus: 0}})
+        await prisma.user.update({ where: { id: user.id }, data: { kycStatus: 0 } })
         return res.status(200).send({ status: 200, message: 'Ok' })
     } catch (err) {
         return next(err)
@@ -733,23 +778,30 @@ const getFollowStatus = async (req: ExtendedRequest, res: Response, next: NextFu
         const isRequested = await prisma.followRequest.findFirst({
             where: { user_id: user_id, follower_id: user.id, status: 0 },
         })
-        return res.status(200).send({ status: 200, message: 'Ok', isFollowing: isFollowing ? true : false, isRequested: isRequested ? true : false })
+        return res.status(200).send({
+            status: 200,
+            message: 'Ok',
+            isFollowing: isFollowing ? true : false,
+            isRequested: isRequested ? true : false,
+        })
     } catch (err) {
         return next(err)
     }
 }
 
 const getPinnedLocations = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
-    const user = req.user;
-    const pinnedLocations = await prisma.pinnedLocation.findMany({where: {user_id: user.id}});
-    return res.status(200).json({status: 200, message: 'Ok', pinnedLocations: pinnedLocations});
+    const user = req.user
+    const pinnedLocations = await prisma.pinnedLocation.findMany({ where: { user_id: user.id } })
+    return res.status(200).json({ status: 200, message: 'Ok', pinnedLocations: pinnedLocations })
 }
 
 const pinLocation = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const { latitude, longitude, title } = req.body
     if (!latitude || !longitude) {
-        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'Latitude and Longitude is required' })
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'Latitude and Longitude is required' })
     }
     try {
         const addedPin = await prisma.pinnedLocation.create({
@@ -757,8 +809,8 @@ const pinLocation = async (req: ExtendedRequest, res: Response, next: NextFuncti
                 latitude: latitude,
                 longitude: longitude,
                 title: title,
-                user_id: user.id
-            }
+                user_id: user.id,
+            },
         })
         return res.status(200).send({ status: 200, message: 'Ok', pinned: addedPin })
     } catch (err) {
@@ -774,13 +826,12 @@ const deletePinnedLocation = async (req: ExtendedRequest, res: Response, next: N
     }
     try {
         await prisma.pinnedLocation.delete({
-            where: { id: Number(id) }
+            where: { id: Number(id) },
         })
         return res.status(200).send({ status: 200, message: 'Ok' })
     } catch (err) {
         return next(err)
     }
-
 }
 
 const userController = {
@@ -809,7 +860,7 @@ const userController = {
     getPinnedLocations,
     pinLocation,
     deletePinnedLocation,
-    updateRegistrationToken
+    updateRegistrationToken,
 }
 
 export default userController

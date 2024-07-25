@@ -108,7 +108,7 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
                     const userId = createdUser.id;
                     return prisma.follows.create({
                         data: { 
-                            user_id: 2, 
+                            user_id: 3, 
                             follower_id: userId 
                         }
                     });

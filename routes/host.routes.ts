@@ -12,7 +12,7 @@ HostRouter
     //@ts-ignore
     .get('/profile/:id', hostController.getHostProfile)
     //@ts-ignore
-    .post("/profile/:id", upload.single("image"), hostController.updateHostProfile)
+    .put("/profile/pic/:id", upload.single("image"), hostController.updateHostProfile)
     //@ts-ignore
     .put('/profile/update/:id', hostController.updateProfile)
     //@ts-ignore

@@ -12,9 +12,6 @@ dotenv.config()
 export const CreatePost = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const body = req.body
-    console.log(req.body, 'body');
-    console.log(req.files, 'files');
-    console.log(req.file, 'file');
     const randomImageName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
     const imageName = randomImageName()
     const params = {
@@ -42,27 +39,22 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
 export const createTemplate = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const body = req.body
-    console.log(req.body, 'body');
-    console.log(req.files, 'files');
-    console.log(req.file, 'file');
-    
-    
-    let transitionArray = []
-    if (req.files && Array.isArray(req.files)) {
-        for (let i = 0; i < req.files.length; i++) {
-            const randomImageName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
-            const imageName = randomImageName()
-            const params = {
-                Bucket: process.env.BUCKET_NAME!,
-                Key: imageName,
-                Body: req.files[i].buffer,
-                ContentType: req.files[i].mimetype,
-            }
-            const command = new PutObjectCommand(params)
-            await s3.send(command)
-            transitionArray.push(`https://ezio.s3.eu-north-1.amazonaws.com/${imageName}`)
-        }
-    }
+    // let transitionArray = []
+    // if (req.files && Array.isArray(req.files)) {
+    //     for (let i = 0; i < req.files.length; i++) {
+    //         const randomImageName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
+    //         const imageName = randomImageName()
+    //         const params = {
+    //             Bucket: process.env.BUCKET_NAME!,
+    //             Key: imageName,
+    //             Body: req.files[i].buffer,
+    //             ContentType: req.files[i].mimetype,
+    //         }
+    //         const command = new PutObjectCommand(params)
+    //         await s3.send(command)
+    //         transitionArray.push(`https://ezio.s3.eu-north-1.amazonaws.com/${imageName}`)
+    //     }
+    // }
     const post = await prisma.post.create({
         data: {
             description: body.description,
@@ -83,7 +75,7 @@ export const createTemplate = async (req: ExtendedRequest, res: Response, next: 
                     t6: body.filterName.t6,
                 },
             },
-            transitions: transitionArray
+            transitions: body.transitions
         },
     })
     return res.status(200).send({ status: 201, message: 'Created', template: post })

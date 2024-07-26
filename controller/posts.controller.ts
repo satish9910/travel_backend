@@ -39,6 +39,11 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
 export const createTemplate = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const body = req.body
+    console.log(req.body);
+    console.log(req.files);
+    console.log(req);
+    
+    
     let transitionArray = []
     if (req.files && Array.isArray(req.files)) {
         for (let i = 0; i < req.files.length; i++) {

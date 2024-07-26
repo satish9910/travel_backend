@@ -92,6 +92,21 @@ const updateProfile = async (req: ExtendedRequest, res: Response, next: NextFunc
     return res.status(200).send({ updated: host })
 }
 
+const changeHostPassword = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const hostId: string | number = req.params.id
+    const { oldPassword, newPassword } = req.body
+    const host = await prisma.host.findUnique({ where: { id: Number(hostId) } })
+    if (!host) {
+        return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Host not found.' })
+    }
+    const isPasswordCorrect = host.password === oldPassword
+    if (!isPasswordCorrect) {
+        return res.status(200).send({ status: 400, error: 'Invalid payload', error_description: 'Old password is incorrect.' })
+    }
+    await prisma.host.update({ where: { id: Number(hostId) }, data: { password: newPassword } })
+    return res.status(200).send({ status: 200, message: 'Password changed successfully.' })
+}
 
-const hostController = { getHostedTrips, GetSpecificTripHost, getHostProfile, updateHostProfile, updateProfile }
+
+const hostController = { getHostedTrips, GetSpecificTripHost, getHostProfile, updateHostProfile, updateProfile, changeHostPassword }
 export default hostController

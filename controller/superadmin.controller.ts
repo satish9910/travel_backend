@@ -49,6 +49,23 @@ const getAllVendors = async (req: ExtendedRequest, res: Response, next: NextFunc
     }
 }
 
+export const deleteVendor = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const host_id = req.params.host_id
+
+    if (isNaN(Number(host_id))) {
+        return res
+            .status(200)
+            .send({ status: 400, error: 'Bad Request', error_description: 'Invalid Query Parameters' })
+    }
+    try {
+        const vendor = await prisma.host.delete({ where: { id: Number(host_id) } })
+        return res.status(200).send({ status: 200, vendor: vendor })
+    } catch (err) {
+        return next(err)
+    }
+}
+
+
 export const hostServices = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const host_id = req.params.host_id
 
@@ -192,6 +209,7 @@ const superAdminController = {
     handleKyc,
     getServiceOptions,
     addServiceOption,
-    deleteServiceOption
+    deleteServiceOption,
+    deleteVendor
 }
 export default superAdminController

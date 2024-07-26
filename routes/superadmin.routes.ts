@@ -27,6 +27,8 @@ SuperAdminRouter
     .post('/service-option', superAdminController.addServiceOption)
     //@ts-ignore
     .delete('/service-option/:id', superAdminController.deleteServiceOption)
+    //@ts-ignore
+    .delete('vendor/:host_id', superAdminController.deleteVendor)
     
 
 export default SuperAdminRouter

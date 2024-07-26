@@ -15,5 +15,7 @@ HostRouter
     .post("/profile/:id", upload.single("image"), hostController.updateHostProfile)
     //@ts-ignore
     .put('/profile/update/:id', hostController.updateProfile)
+    //@ts-ignore
+    .put('/password/:id', hostController.changeHostPassword)
     
 export default HostRouter

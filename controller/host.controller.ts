@@ -59,6 +59,7 @@ const getHostProfile = async (req: ExtendedRequest, res: Response, next: NextFun
 }
 
 const updateHostProfile = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    try{
     const hostId: string | number = req.params.id
     const randomImageName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
     const imageName = randomImageName()
@@ -71,7 +72,7 @@ const updateHostProfile = async (req: ExtendedRequest, res: Response, next: Next
     const command = new PutObjectCommand(params)
     await s3.send(command)
 
-    const imageUrl = req.body.photo
+    const imageUrl = `https://ezio.s3.eu-north-1.amazonaws.com/${imageName}`
     if (!hostId) {
         return res
             .status(200)
@@ -80,6 +81,9 @@ const updateHostProfile = async (req: ExtendedRequest, res: Response, next: Next
 
     const host = await prisma.host.update({ where: { id: Number(hostId) }, data: { ...req.body, photo: imageUrl } })
     return res.status(200).send({ status: 200, host })
+    }catch(err){
+        console.log(err);
+    }
 }
 
 const updateProfile = async (req: ExtendedRequest, res: Response, next: NextFunction) => {

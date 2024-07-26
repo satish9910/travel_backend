@@ -12,6 +12,9 @@ dotenv.config()
 export const CreatePost = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const body = req.body
+    console.log(req.body, 'body');
+    console.log(req.files, 'files');
+    console.log(req.file, 'file');
     const randomImageName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
     const imageName = randomImageName()
     const params = {
@@ -39,9 +42,9 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
 export const createTemplate = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const user = req.user
     const body = req.body
-    console.log(req.body);
-    console.log(req.files);
-    console.log(req);
+    console.log(req.body, 'body');
+    console.log(req.files, 'files');
+    console.log(req.file, 'file');
     
     
     let transitionArray = []

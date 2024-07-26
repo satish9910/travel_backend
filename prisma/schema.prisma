@@ -115,6 +115,7 @@ model Post {
   // transitionData TransitionData[]
   soundName      String?
   filterName     FilterName[]
+  transitions    Json?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

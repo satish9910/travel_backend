@@ -16,6 +16,8 @@ postRouter
     // .post('/', postController.CreatePost)
     .post('/', upload.single('image'), postController.CreatePost)
     //@ts-ignore
+    .post('/template', upload.array('videos', 10), postController.createTemplate)
+    //@ts-ignore
     .delete('/:id', postController.DeletePost)
     //@ts-ignore
     .post('/user', postController.GetPostsByUserId)

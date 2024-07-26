@@ -22,7 +22,6 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
     }
     const command = new PutObjectCommand(params)
     await s3.send(command)
-    if (!body.soundName) {
         const post = await prisma.post.create({
             data: {
                 image: `https://ezio.s3.eu-north-1.amazonaws.com/${imageName}`,
@@ -35,10 +34,29 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
             },
         })
         return res.status(200).send({ status: 201, message: 'Created', post: post })
+}
+
+export const createTemplate = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const user = req.user
+    const body = req.body
+    let transitionArray = []
+    if (req.files && Array.isArray(req.files)) {
+        for (let i = 0; i < req.files.length; i++) {
+            const randomImageName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
+            const imageName = randomImageName()
+            const params = {
+                Bucket: process.env.BUCKET_NAME!,
+                Key: imageName,
+                Body: req.files[i].buffer,
+                ContentType: req.files[i].mimetype,
+            }
+            const command = new PutObjectCommand(params)
+            await s3.send(command)
+            transitionArray.push(`https://ezio.s3.eu-north-1.amazonaws.com/${imageName}`)
+        }
     }
     const post = await prisma.post.create({
         data: {
-            image: `https://ezio.s3.eu-north-1.amazonaws.com/${imageName}`,
             description: body.description,
             user_id: user.id,
             media_type: body.media_type,
@@ -56,10 +74,11 @@ export const CreatePost = async (req: ExtendedRequest, res: Response, next: Next
                     t5: body.filterName.t5,
                     t6: body.filterName.t6,
                 },
-            }
+            },
+            transitions: transitionArray
         },
     })
-    return res.status(200).send({ status: 201, message: 'Created', post: post })
+    return res.status(200).send({ status: 201, message: 'Created', template: post })
 }
 
 export const GetOnlyVideos = async (req: ExtendedRequest, res: Response, _next: NextFunction) => {
@@ -296,5 +315,5 @@ export const DeletePost = async (req: ExtendedRequest, res: Response, next: Next
         return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Post not found.' })
     }
 }
-const postController = { CreatePost, GetPosts, GetSpecificPost, DeletePost, GetOnlyVideos, GetPostsByUserId }
+const postController = { CreatePost, GetPosts, GetSpecificPost, DeletePost, GetOnlyVideos, GetPostsByUserId, createTemplate }
 export default postController

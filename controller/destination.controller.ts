@@ -2,7 +2,12 @@ import type { Response, NextFunction } from 'express'
 import { ExtendedRequest } from '../utils/middleware'
 import helper from '../utils/helpers'
 import { PrismaClient } from '@prisma/client'
+import { PutObjectCommand } from '@aws-sdk/client-s3'
+import { s3 } from '../app'
 const prisma = new PrismaClient()
+import crypto from 'crypto'
+import dotenv from 'dotenv'
+dotenv.config()
 
 export const createDestination = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const body = req.body
@@ -13,12 +18,24 @@ export const createDestination = async (req: ExtendedRequest, res: Response, nex
             error_description: 'destination, pincode is required.',
         })
     }
+    const randomImageName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex')
+    const imageName = randomImageName()
+
+    const params = {
+        Bucket: process.env.BUCKET_NAME!,
+        Key: imageName,
+        Body: req.file?.buffer,
+        ContentType: req.file?.mimetype,
+    }
+    const command = new PutObjectCommand(params)
+    await s3.send(command)
+
     const destination = await prisma.destination.create({
         data: {
             destination: body.destination,
             description: body.description,
             pincode: body.pincode,
-            image: body.image,
+            image: `https://ezio.s3.eu-north-1.amazonaws.com/${imageName}`,
             features: body.features,
             customise_options: body.customise_options,
             latitude: Number(body.latitude),

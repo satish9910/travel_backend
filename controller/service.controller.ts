@@ -2,8 +2,11 @@ import type { Response, NextFunction } from 'express'
 import { ExtendedRequest } from '../utils/middleware'
 import helper from '../utils/helpers'
 import { PrismaClient } from '@prisma/client'
-import { addMonths, parseISO } from 'date-fns';
+import { addMonths, parseISO } from 'date-fns'
 const prisma = new PrismaClient()
+import { PutObjectCommand } from '@aws-sdk/client-s3'
+import crypto from 'crypto'
+import { s3 } from '../app'
 
 export const CreateService = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     const body = req.body
@@ -78,45 +81,78 @@ export const getFilteredServices = async (req: ExtendedRequest, res: Response, n
     let filteredServices = []
     const query = req.query
     const { page = 1, limit = 10, destination, start_date, seats } = query
-    if (isNaN(Number(page)) || isNaN(Number(limit)) || isNaN(Number(seats)) || typeof destination !== 'string' || typeof start_date !== 'string') {
+    if (
+        isNaN(Number(page)) ||
+        isNaN(Number(limit)) ||
+        isNaN(Number(seats)) ||
+        typeof destination !== 'string' ||
+        typeof start_date !== 'string'
+    ) {
         return res
             .status(200)
             .send({ status: 400, error: 'Bad Request', error_description: 'Invalid Query Parameters' })
     }
     const skip = (Number(page) - 1) * Number(limit)
     try {
-        const defaultServices = await GetDefaultServices(req, res, next, destination, skip, Number(limit));
-        const groupServices = await getGroupServices(req, res, next, destination, start_date, Number(seats), skip, Number(limit));
-        filteredServices = [...defaultServices, ...groupServices];
-        return res.status(200).send({ status: 200, message: 'Ok', services: filteredServices, count: filteredServices.length })
+        const defaultServices = await GetDefaultServices(req, res, next, destination, skip, Number(limit))
+        const groupServices = await getGroupServices(
+            req,
+            res,
+            next,
+            destination,
+            start_date,
+            Number(seats),
+            skip,
+            Number(limit)
+        )
+        filteredServices = [...defaultServices, ...groupServices]
+        return res
+            .status(200)
+            .send({ status: 200, message: 'Ok', services: filteredServices, count: filteredServices.length })
     } catch (err) {
         return next(err)
     }
 }
 
-const GetDefaultServices = async (req: ExtendedRequest, res: Response, next: NextFunction, destination: string, skip: number, limit: number) => {
+const GetDefaultServices = async (
+    req: ExtendedRequest,
+    res: Response,
+    next: NextFunction,
+    destination: string,
+    skip: number,
+    limit: number
+) => {
     const services = await prisma.service.findMany({
         where: {
             type: 0,
-            destination: { equals: destination }
+            destination: { equals: destination },
         },
         include: {
             host: {
                 select: {
                     name: true,
-                    photo: true
-                }
-            }
+                    photo: true,
+                },
+            },
         },
         skip: skip,
         take: limit,
     })
-    return services;
+    return services
 }
 
-const getGroupServices = async (req: ExtendedRequest, res: Response, next: NextFunction, destination: string, start_date: string, seats: number, skip: number, limit: number) => {
+const getGroupServices = async (
+    req: ExtendedRequest,
+    res: Response,
+    next: NextFunction,
+    destination: string,
+    start_date: string,
+    seats: number,
+    skip: number,
+    limit: number
+) => {
     const startDate = parseISO(start_date.replace(/\/\//g, '-')).toISOString()
-    const endDate = addMonths(parseISO(start_date), 1).toISOString();
+    const endDate = addMonths(parseISO(start_date), 1).toISOString()
 
     const services = await prisma.service.findMany({
         where: {
@@ -124,7 +160,7 @@ const getGroupServices = async (req: ExtendedRequest, res: Response, next: NextF
             destination: { equals: destination },
             start_date: {
                 gte: startDate,
-                lt: endDate
+                lt: endDate,
             },
             available_seats: { gte: seats },
         },
@@ -132,14 +168,14 @@ const getGroupServices = async (req: ExtendedRequest, res: Response, next: NextF
             host: {
                 select: {
                     name: true,
-                    photo: true
-                }
-            }
+                    photo: true,
+                },
+            },
         },
         skip: skip,
         take: limit,
     })
-    return services;
+    return services
 }
 
 export const getServicesByHostId = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
@@ -153,7 +189,7 @@ export const getServicesByHostId = async (req: ExtendedRequest, res: Response, n
         const services = await prisma.service.findMany({
             where: {
                 host_id: { equals: Number(host_id) },
-                type: { not: 2 }
+                type: { not: 2 },
             },
         })
         return res.status(200).send({ status: 200, message: 'Ok', services: services, count: services.length })
@@ -172,7 +208,7 @@ export const getBidsByHostId = async (req: ExtendedRequest, res: Response, next:
         const services = await prisma.service.findMany({
             where: {
                 host_id: { equals: Number(host_id) },
-                type: { equals: 2 }
+                type: { equals: 2 },
             },
         })
         return res.status(200).send({ status: 200, message: 'Ok', bids: services, count: services.length })
@@ -204,10 +240,10 @@ export const getSpecificService = async (req: ExtendedRequest, res: Response, ne
                     email: true,
                     description: true,
                     google_rating: true,
-                    photo: true
-                }
-            }
-        }
+                    photo: true,
+                },
+            },
+        },
     })
     if (!service) {
         return res.status(200).send({ status: 404, error: 'Not found', error_description: 'Service not found.' })
@@ -280,29 +316,42 @@ const editServiceById = async (req: ExtendedRequest, res: Response, next: NextFu
 const uploadServicePics = async (req: ExtendedRequest, res: Response, next: NextFunction) => {
     try {
         let serviceId: string | number = req.params.id
-        
-        const files = req.body
-        
+        const files = (req as any).files as Express.Multer.File[];
+
         if (!serviceId) {
             return res
                 .status(200)
                 .send({ status: 400, error: 'Invalid payload', error_description: 'service_id is required in body.' })
         }
-        if (!files) {
-            return res
-                .status(200)
-                .send({ status: 400, error: 'Invalid payload', error_description: 'files are required.' })
+        if (!files || files.length === 0) {
+            return res.status(400).send({
+                status: 400,
+                error: 'Invalid payload',
+                error_description: 'files are required.'
+            });
         }
-        if (!Array.isArray(files) || files.length > 5) {
-            return res
-                .status(200)
-                .send({ status: 400, error: 'Invalid payload', error_description: 'Maximum 5 files are allowed.' })
-        }
+        const imageNames: string[] = [];
+
+        const uploadPromises = files.map(async (file) => {
+            const randomImageName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex');
+            const imageName = randomImageName();
+            const params = {
+                Bucket: process.env.BUCKET_NAME!,
+                Key: imageName,
+                Body: file.buffer,
+                ContentType: file.mimetype,
+            };
+            const command = new PutObjectCommand(params);
+            await s3.send(command);
+            imageNames.push(`https://ezio.s3.eu-north-1.amazonaws.com/${imageName}`); 
+        });
+
+        await Promise.all(uploadPromises)
 
         const service = await prisma.service.update({
             where: { id: Number(serviceId) },
             data: {
-                images: files
+                images: imageNames
             },
         })
         return res.status(200).send({ status: 200, message: 'Pictures uploaded', service })
@@ -320,6 +369,6 @@ const serviceController = {
     editServiceById,
     uploadServicePics,
     getFilteredServices,
-    getBidsByHostId
+    getBidsByHostId,
 }
 export default serviceController

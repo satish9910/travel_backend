@@ -111,6 +111,7 @@ model Post {
   longitude   String?
   place       String?
   thumbnail   String?
+  duration    String?
   postReport  PostReport[]
   // transitionData TransitionData[]
   soundName      String?

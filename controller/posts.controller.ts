@@ -63,6 +63,7 @@ export const createTemplate = async (req: ExtendedRequest, res: Response, next: 
             latitude: body.latitude,
             longitude: body.longitude,
             place: body.place,
+            duration: body.duration,
             soundName: body.soundName,
             filterName: {
                 create: {

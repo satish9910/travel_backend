@@ -80,24 +80,24 @@ const ForgotPassword = async (req: ExtendedRequest, res: Response, next: NextFun
 
 const Signup = async (req: Request, res: Response, next: NextFunction) => {
     const body = req.body
-    if (!helper.isValidatePaylod(body, ['phone', 'username', 'password'])) {
+    if (!helper.isValidatePaylod(body, ['phone', 'username', 'password', 'email'])) {
         return res.status(200).send({
             status: 400,
             error: 'Invalid Payload',
-            error_description: 'username, phone, password are requried.',
+            error_description: 'username, phone, password, email are requried.',
         })
     }
-    const { phone, password, username, referredByCode } = req.body
+    const { phone, password, username, referredByCode, email } = req.body
     let isAlreadyExists: any = false
     try {
-        isAlreadyExists = await prisma.user.findFirst({ where: { OR: [{ phone }, { username: username }] } })
+        isAlreadyExists = await prisma.user.findFirst({ where: { OR: [{ phone }, { username: username }, {email: email}] } })
     } catch (err) {
         return next(err)
     }
     if (isAlreadyExists) {
         return res
             .status(200)
-            .send({ status: 400, error: 'BAD REQUEST', error_description: 'username or phone already exists.' })
+            .send({ status: 400, error: 'BAD REQUEST', error_description: 'username, phone or email already exists.' })
     }
 
     function generateReferralCode() {
@@ -114,6 +114,7 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
                     data: {
                         phone,
                         password: hash_password,
+                        email: email,
                         username,
                         referredByCode: referredByCode,
                         userReferralCode: referralCode,

@@ -59,6 +59,7 @@ model User {
   // template        Template[]
   kyc             KYC?
   kycStatus       Int?             @default(-1) // -1 = not submitted, 0 = submitted, 1 = accepted
+  isSocialLogin  Boolean          @default(false)
 }
 
 model KYC {

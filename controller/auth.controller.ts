@@ -319,6 +319,7 @@ const socialSignUp = async (req: Request, res: Response, next: NextFunction, ema
                         email,
                         password: hash_password,
                         userReferralCode: referralCode,
+                        isSocialLogin: true
                     },
                 })
                 .then((createdUser) => {

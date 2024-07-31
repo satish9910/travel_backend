@@ -88,16 +88,21 @@ const Signup = async (req: Request, res: Response, next: NextFunction) => {
         })
     }
     const { phone, password, username, referredByCode, email } = req.body
-    let isAlreadyExists: any = false
     try {
-        isAlreadyExists = await prisma.user.findFirst({ where: { OR: [{ phone }, { username: username }, {email: email}] } })
+        const isUsernameExists = await prisma.user.findFirst({ where: { username } })
+        if (isUsernameExists) {
+            return res.status(200).send({ status: 400, error: 'BAD REQUEST', error_description: 'username already exists.' })
+        }
+        const isPhoneExists = await prisma.user.findFirst({ where: { phone } })
+        if (isPhoneExists) {
+            return res.status(200).send({ status: 400, error: 'BAD REQUEST', error_description: 'phone already exists.' })
+        }
+        const isEmailExists = await prisma.user.findFirst({ where: { email } })
+        if(isEmailExists){
+            return res.status(200).send({ status: 400, error: 'BAD REQUEST', error_description: 'email already exists.' })
+        }
     } catch (err) {
         return next(err)
-    }
-    if (isAlreadyExists) {
-        return res
-            .status(200)
-            .send({ status: 400, error: 'BAD REQUEST', error_description: 'username, phone or email already exists.' })
     }
 
     function generateReferralCode() {

@@ -154,7 +154,7 @@ export const GetPosts = async (req: ExtendedRequest, res: Response, _next: NextF
 }
 
 export const GetPostsByUserId = async (req: ExtendedRequest, res: Response, _next: NextFunction) => {
-    const id = req.body.userId
+    const id = Number(req.body.userId)
     const isFollowing = await prisma.follows.findFirst({
         where: { user_id: id, follower_id: req.user.id },
     })

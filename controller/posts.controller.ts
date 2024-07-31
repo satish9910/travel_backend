@@ -183,8 +183,16 @@ export const GetPostsByUserId = async (req: ExtendedRequest, res: Response, _nex
                     status: true,
                 },
             },
+            filterName: true,
         },
     })
+    for (let i = 0; i < posts.length; i++) {
+        const isLiked = await prisma.likes.findFirst({
+            where: { post_id: posts[i].id, user_id: req.user.id },
+        })
+        //@ts-ignore
+        posts[i].isLiked = isLiked ? true : false
+    }
     const user = await prisma.user.findFirst({
         where: { id: id },
         include: {

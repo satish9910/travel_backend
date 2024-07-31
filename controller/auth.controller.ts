@@ -192,9 +192,6 @@ const VerifyOtp = async (req: Request, res: Response, next: NextFunction) => {
             .send({ status: 400, error: 'Invalid payload', error_description: 'email, otp are required.' })
     }
     const user = await prisma.user.findFirst({ where: { email } })
-    if (user?.is_verified) {
-        return res.status(200).send({ status: 400, error: 'Bad Request', error_description: 'User already verified' })
-    }
     if (!user)
         return res
             .status(200)

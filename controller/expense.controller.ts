@@ -77,6 +77,7 @@ export const getEachTripsExpenses = async (req: ExtendedRequest, res: Response, 
             }
         }
     })
+    
     const trips = [...normal_trips, ...custom_trips]
     let tripExpenses = []
     for (let i = 0; i < trips.length; i++) {
